@@ -109,7 +109,7 @@ if [ -z "$BOT_TOKEN" ] || [ -z "$USER_ID" ]; then
 fi
 
 # Daftar file database
-DB_FILES=("sellvpn.db" "ressel.db" "trial.db")
+DB_FILES=("sellsc.db" "ressel.db" "trial.db" "total.db")
 
 for DB_FILE in "${DB_FILES[@]}"; do
     FILE_PATH="$DB_FOLDER/$DB_FILE"
@@ -130,7 +130,7 @@ EOF
 cat >/etc/cron.d/backup_sellsc <<'EOF'
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-0 0 * * * root /usr/bin/backup_sellsc
+0 * * * * root /usr/bin/backup_sellsc
 EOF
 
 chmod +x /usr/bin/backup_sellsc
