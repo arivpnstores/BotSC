@@ -68,23 +68,11 @@ setup_bot() {
 
 server_app() {
     clear
-cat >/etc/systemd/system/sellsc.service <<EOF
-[Unit]
-Description=sellsc Bot Service
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=/root/BotSC
-ExecStart=/usr/bin/node /root/BotSC/app.js
-Restart=always
-User=root
-Environment=NODE_ENV=production
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
+cd /root/BotSC
+pm2 start ecosystem.config.js
+pm2 startup
+pm2 save
+cd 
 cat >/usr/bin/backup_sellsc <<'EOF'
 #!/bin/bash
 # File: /usr/bin/backup_sellsc
@@ -134,11 +122,6 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 EOF
 
 chmod +x /usr/bin/backup_sellsc
-
-systemctl daemon-reload >/dev/null 2>&1
-systemctl enable sellsc.service >/dev/null 2>&1
-systemctl start sellsc.service >/dev/null 2>&1
-systemctl restart sellsc.service >/dev/null 2>&1
 service cron restart
 
     echo -e "       Status Server is "$(cek_status)""
