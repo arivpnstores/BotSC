@@ -769,7 +769,14 @@ bot.on('text', async (ctx) => {
     const ip = state.ip;
     const exp = 30;
   // ==== Tentukan harga sesuai status user ====
+// ==== Cek Status Reseller ====
 let isReseller = false;
+if (fs.existsSync(resselFilePath)) {
+  const resellerList = fs.readFileSync(resselFilePath, 'utf8').split('\n').map(x => x.trim());
+  isReseller = resellerList.includes(ctx.from.id.toString());
+}
+
+
 let totalHarga = 5000; // default untuk user biasa
 
 if (isReseller) {
@@ -1006,7 +1013,13 @@ await bot.telegram.sendMessage(
     if (!ipRegex.test(ip)) {
       return ctx.reply('❌ *Format IP tidak valid.* Coba lagi.', { parse_mode: 'Markdown' });
     }
+// ==== Cek Status Reseller ====
 let isReseller = false;
+if (fs.existsSync(resselFilePath)) {
+  const resellerList = fs.readFileSync(resselFilePath, 'utf8').split('\n').map(x => x.trim());
+  isReseller = resellerList.includes(ctx.from.id.toString());
+}
+
     const exp = 30;
   // ==== Tentukan harga sesuai status user ====
 let totalHarga = 5000; // default untuk user biasa
@@ -1037,9 +1050,7 @@ await bot.telegram.sendMessage(
 ━━━━━━━━━━━━━━━━━━━━
 👤 <b>User:</b> ${ctx.from.first_name} (${ctx.from.id})
 🌐 <b>IP:</b> ${maskedIp}
-📛 <b>Nama:</b> ${nama}
 📆 <b>New Expiry:</b> ${exp || '-'} hari
-💾 <b>Quota:</b> ${quota || '-'}
 ━━━━━━━━━━━━━━━━━━━━
 </blockquote>`,
   { parse_mode: 'HTML' }
@@ -1075,19 +1086,34 @@ logger.info(`✅ Transaksi sukses untuk user ${ctx.from.id}`);
     });
   }
 
-    if (state.step === 'input_del_ip') {
-    const ip = text;
-    const ipRegex = /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/;
-    if (!ipRegex.test(ip)) {
-      return ctx.reply('❌ *Format IP tidak valid.* Coba lagi.', { parse_mode: 'Markdown' });
-    }
-  // ==== Tentukan harga sesuai status user ====
-let isReseller = false;
-let totalHarga = 5000; // default untuk user biasa
+if (state.step === 'input_del_ip') {
+  const ip = text;
+  const ipRegex = /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/;
 
-if (isReseller) {
-  totalHarga = 2500; // harga khusus reseller
+  if (!ipRegex.test(ip)) {
+    return ctx.reply('❌ *Format IP tidak valid.* Coba lagi.', { parse_mode: 'Markdown' });
+  }
+
+  // ==== Cek Status Reseller ====
+// ==== Cek Status Reseller ====
+let isReseller = false;
+if (fs.existsSync(resselFilePath)) {
+  const resellerList = fs.readFileSync(resselFilePath, 'utf8').split('\n').map(x => x.trim());
+  isReseller = resellerList.includes(ctx.from.id.toString());
 }
+
+  // Kalau bukan reseller -> stop
+  if (!isReseller) {
+    delete userState[ctx.chat.id]; // reset state
+    return ctx.reply(
+      '❌ *Fitur Delete IP hanya untuk Reseller*\n\n' +
+      '🤝 Ingin jadi reseller dan dapat harga spesial?\nGunakan tombol /start lalu pilih *Jadi Reseller*',
+      { parse_mode: 'Markdown' }
+    );
+  }
+
+  // ==== Harga delete khusus reseller ====
+  let totalHarga = 0;
 
 
 db.get('SELECT saldo FROM users WHERE user_id = ?', [ctx.from.id], async (err, row) => {
