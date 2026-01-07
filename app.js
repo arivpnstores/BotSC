@@ -299,9 +299,6 @@ dalam layanan VPN dengan bot kami!
 ──────────────────────────`;
 
 const keyboard = [];
-
-if (isReseller) {
-  // Menu untuk reseller
   keyboard.push(
     [
       { text: '➕ Beli SC TUNNEL', callback_data: 'register_ip' },
@@ -316,31 +313,12 @@ if (isReseller) {
       { text: '🔗 Link Install', callback_data: 'link_install' }
     ],
     [
-      { text: '💰 TopUp Saldo', callback_data: 'topup_saldo' }
+      { text: '💰 TopUp Saldo', callback_data: 'topup_saldo' },
+    ],
+    [
+      { text: '🤝 Jadi Reseller & Dapat Harga Spesial', callback_data: 'jadi_reseller' }
     ]
   );
-} else {
-  // Menu untuk user biasa (belum reseller)
-  keyboard.push(
-    [
-      { text: '➕ Beli SC TUNNEL', callback_data: 'register_ip' },
-      { text: '♻️ Renew SC TUNNEL', callback_data: 'renew_ip' }
-    ],
-    [
-      { text: '⌛ Trial SC TUNNEL', callback_data: 'trial_ip' },
-      { text: '🔄 Ganti SC TUNNEL', callback_data: 'ganti_ip' }
-    ],
-    [
-       { text: '🔗 Link Install', callback_data: 'link_install' },
-      { text: '💰 TopUp Saldo', callback_data: 'topup_saldo' }
-    ],
-    [
-      { text: '🤝 Yuk Jadi Reseller & Dapat Harga Spesial!', callback_data: 'jadi_reseller' }
-    ]
-  );
-}
-
-
   try {
     if (ctx.updateType === 'callback_query') {
       try {
@@ -1889,22 +1867,32 @@ const qrBuffer = Buffer.from(qrResponse.data);
   }
 }
 
-// ===== CEK STATUS BY AMOUNT (GATEWAY) =====
+// ===== CEK STATUS BY AMOUNT (GATEWAY) - PREMIUM + LOG =====
 async function cekStatusAmountGateway(amount) {
-  const url = 'http://api.rajaserverpremium.web.id/orderkuota/cekstatus';
+  const url = `http://api.rajaserverpremium.web.id/orderkuota/cekstatus?apikey=${APIKEY}&auth_username=${AUTH_USER}&auth_token=${AUTH_TOKEN}&web_mutasi=${WEB_MUTASI}&amount=${amount}`;
 
-  const res = await axios.get(url, {
-    params: {
-      apikey: APIKEY,
-      auth_username: AUTH_USER,
-      auth_token: AUTH_TOKEN,
-      web_mutasi: WEB_MUTASI,
-      amount: amount
-    },
-    timeout: 20000
-  });
+  for (let i = 0; i < 3; i++) {
+    try {
+      logger.info(`[QRIS] Cek status amount=${amount} try=${i+1}`);
+      const res = await axios.get(url, { timeout: 20000 });
+      logger.info(`[QRIS] Gateway OK amount=${amount} => state=${res.data?.payment?.state || '-'}`);
+      return res.data;
+    } catch (err) {
+      const status = err?.response?.status;
+      logger.error(`[QRIS] Gateway ERROR amount=${amount} try=${i+1} | status=${status || '-'} code=${err.code || '-'} msg=${err.message}`);
 
-  return res.data; // { status, creator, payment:{state,amount}, result:[] }
+      // 502/503/504 = biasanya sementara, retry pakai backoff
+      if ([502, 503, 504].includes(status)) {
+        await new Promise(r => setTimeout(r, 500 * (i + 1)));
+        continue;
+      }
+
+      // selain itu langsung stop (misal 401/403 dll)
+      break;
+    }
+  }
+
+  return { status: 'error', payment: { state: 'unknown', amount }, result: [] };
 }
 
 // ===== LOOP CEK QRIS =====
