@@ -43,7 +43,7 @@ module.exports = { buildPayload, headers, API_URL };
 ```
 ganti txt hasil seniff anda
 
-NOTE : admin tidak menjual source bot ini, free gratis untuk kalian karena devloper asli nya juga tidak di jual belikan, anda membeli script BotVPN sc potato = anda di tipu, sekian terima gaji :)
+NOTE : admin tidak menjual source bot ini, free gratis untuk kalian karena devloper asli nya juga tidak di jual belikan, anda membeli script BotSC sc potato = anda di tipu, sekian terima gaji :)
 kasih uang jajan : https://rajaserverpremium.web.id/payment/
 
 Owner : https://t.me/ARI_VPN_STORE

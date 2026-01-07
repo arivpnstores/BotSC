@@ -4,7 +4,7 @@ const express = require('express');
 const { Telegraf } = require('telegraf');
 const app = express();
 const axios = require('axios');
-const { buildPayload, headers, API_URL } = require('./api-cekpayment-orkut');
+const { cekPayment } = require('./api-cekpayment-orkut');
 const winston = require('winston');
 const logger = winston.createLogger({
   level: 'info',
@@ -79,12 +79,14 @@ const port = vars.PORT || 6969;
 const ADMIN = vars.USER_ID; 
 const NAMA_STORE = vars.NAMA_STORE || '@ARI_VPN_STORE';
 const DATA_QRIS = vars.DATA_QRIS;
-const MERCHANT_ID = vars.MERCHANT_ID;
-const API_KEY = vars.API_KEY;
 const GROUP_ID = vars.GROUP_ID;
+const APIKEY = vars.auth_paymet_getway;       // apikey gateway
+const AUTH_USER = vars.auth_username_mutasi;  // username orderkuota
+const AUTH_TOKEN = vars.auth_token_mutasi;    // token orderkuota
+const WEB_MUTASI = vars.web_mutasi;           // https://app.orderkuota.com/api/v2/qris/mutasi/ACCOUNT_ID
 
 const bot = new Telegraf(BOT_TOKEN);
-let ADMIN_USERNAME = '';
+let ADMIN_USERNAME = '@ARI_VPN_STORE';
 const adminIds = ADMIN;
 logger.info('Bot initialized');
 
@@ -531,6 +533,91 @@ bot.command('broadcast', async (ctx) => {
   });
 });
 
+bot.command('broadcastfoto', async (ctx) => {
+    const userId = ctx.message.from.id;
+    if (!adminIds.includes(userId)) {
+        return ctx.reply('⛔ Anda tidak punya izin.');
+    }
+
+    const replyMsg = ctx.message.reply_to_message;
+
+    // Cek apakah broadcast foto atau teks
+    let isPhoto = false;
+    let msgText = '';
+    let photoFileId = '';
+
+    if (replyMsg) {
+        if (replyMsg.photo) {
+            isPhoto = true;
+            // Ambil versi terbesar foto
+            photoFileId = replyMsg.photo[replyMsg.photo.length - 1].file_id;
+            msgText = replyMsg.caption || '';
+        } else if (replyMsg.text) {
+            msgText = replyMsg.text;
+        }
+    } else {
+        msgText = ctx.message.text.split(' ').slice(1).join(' ');
+    }
+
+    if (!msgText && !photoFileId) {
+        return ctx.reply('⚠️ Harap isi pesan broadcast atau reply foto.');
+    }
+
+    ctx.reply('📢 Broadcast dimulai...');
+
+    db.all("SELECT user_id FROM users", [], async (err, rows) => {
+        if (err) return ctx.reply('⚠️ Error ambil data user.');
+
+        let sukses = 0;
+        let gagal = 0;
+        let dihapus = 0;
+
+        const delay = 30; // ms
+
+        for (const row of rows) {
+            try {
+                if (isPhoto) {
+                    await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                        chat_id: row.user_id,
+                        photo: photoFileId,
+                        caption: msgText
+                    });
+                } else {
+                    await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                        chat_id: row.user_id,
+                        text: msgText
+                    });
+                }
+
+                sukses++;
+
+            } catch (error) {
+                const code = error.response?.status;
+                gagal++;
+
+                if (code === 400 || code === 403) {
+                    db.run("DELETE FROM users WHERE user_id = ?", [row.user_id]);
+                    dihapus++;
+                    console.log(`🗑️ User invalid dihapus: ${row.user_id}`);
+                }
+
+                console.log(`❌ Gagal kirim ke ${row.user_id}: ${code}`);
+            }
+
+            await new Promise(r => setTimeout(r, delay));
+        }
+
+        ctx.reply(
+            `📣 *Broadcast selesai!*\n\n` +
+            `✔️ Berhasil: *${sukses}*\n` +
+            `❌ Gagal: *${gagal}*\n` +
+            `🗑️ User dihapus: *${dihapus}*`,
+            { parse_mode: 'Markdown' }
+        );
+    });
+});
+
+
 bot.action('send_main_menu', async (ctx) => {
   if (!ctx || !ctx.match) {
     return ctx.reply('❌ *GAGAL!* Terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi nanti.', { parse_mode: 'Markdown' });
@@ -569,6 +656,10 @@ OS Support
 --------------  
 2. Link Install v4 (Ubuntu 20.04):  
 \`apt update -y && apt install screen curl wget python3-pip -y && wget -q https://raw.githubusercontent.com/arivpnstores/v4/main/Vpn/xray.zip -O /tmp/install && chmod +x /tmp/install && screen -S ari /tmp/install\`  
+
+--------------  
+3. Link Install ZIVPN (Ubuntu 20.04-24.04)::  
+\`apt update -y && apt install screen ufw ruby lolcat curl wget python3-pip -y && wget -q https://raw.githubusercontent.com/arivpnstores/udp-zivpn/main/install.sh -O /usr/local/bin/zivpn-manager && chmod +x /usr/local/bin/zivpn-manager && /usr/local/bin/zivpn-manager\`  
 
 --------------  
 Jika saat instalasi koneksi terputus, login VPS lagi dan jalankan:  
@@ -1724,11 +1815,12 @@ async function processDeposit(ctx, amount) {
   const adminFee = finalAmount - Number(amount)
   try {
     const urlQr = DATA_QRIS; // QR destination
+    const auth_apikey = APIKEY; // QR destination
    // console.log('🔍 CEK DATA_QRIS:', urlQr);
     const axios = require('axios');
-//const sharp = require('sharp'); // opsional kalau mau resize
 
-const bayar = await axios.get(`https://api.rajaserverpremium.web.id/orderkuota/createpayment?apikey=AriApiPaymetGetwayMod&amount=${finalAmount}&codeqr=${urlQr}`);
+
+const bayar = await axios.get(`https://api.rajaserverpremium.web.id/orderkuota/createpayment?apikey=${auth_apikey}&amount=${finalAmount}&codeqr=${urlQr}`);
 const get = bayar.data;
 
 if (get.status !== 'success') {
@@ -1797,6 +1889,25 @@ const qrBuffer = Buffer.from(qrResponse.data);
   }
 }
 
+// ===== CEK STATUS BY AMOUNT (GATEWAY) =====
+async function cekStatusAmountGateway(amount) {
+  const url = 'http://api.rajaserverpremium.web.id/orderkuota/cekstatus';
+
+  const res = await axios.get(url, {
+    params: {
+      apikey: APIKEY,
+      auth_username: AUTH_USER,
+      auth_token: AUTH_TOKEN,
+      web_mutasi: WEB_MUTASI,
+      amount: amount
+    },
+    timeout: 20000
+  });
+
+  return res.data; // { status, creator, payment:{state,amount}, result:[] }
+}
+
+// ===== LOOP CEK QRIS =====
 async function checkQRISStatus() {
   try {
     const pendingDeposits = Object.entries(global.pendingDeposits);
@@ -1806,18 +1917,18 @@ async function checkQRISStatus() {
 
       const depositAge = Date.now() - deposit.timestamp;
       if (depositAge > 5 * 60 * 1000) {
+        // Handle expired payment
         try {
           if (deposit.qrMessageId) {
             await bot.telegram.deleteMessage(deposit.userId, deposit.qrMessageId);
           }
           await bot.telegram.sendMessage(
             deposit.userId,
-            '❌ *Pembayaran Expired*\n\n' +
-              'Waktu pembayaran telah habis. Silakan klik Top Up lagi untuk mendapatkan QR baru.',
+            '❌ *Pembayaran Expired*\n\nWaktu pembayaran telah habis. Silakan klik Top Up lagi untuk mendapatkan QR baru.',
             { parse_mode: 'Markdown' }
           );
-        } catch (error) {
-          logger.error('Error deleting expired payment messages:', error);
+        } catch (err) {
+          logger.error('Error deleting expired payment messages:', err);
         }
 
         delete global.pendingDeposits[uniqueCode];
@@ -1828,53 +1939,50 @@ async function checkQRISStatus() {
       }
 
       try {
-        const data = buildPayload(); // payload selalu fresh
-        const resultcek = await axios.post(API_URL, data, { headers, timeout: 5000 });
+        const expectedAmount = Number(deposit.amount);
 
-        // API balik teks (bukan JSON)
-        const responseText = resultcek.data;
-        //console.log('📦 Raw response from API:\n', responseText);
+        // ✅ cek ke gateway (by amount)
+        const gw = await cekStatusAmountGateway(expectedAmount);
 
-        // Parse teks jadi array transaksi
-        const transaksiList = [];
-        const blocks = responseText.split('------------------------').filter(Boolean);
-
-        for (const block of blocks) {
-          const kreditMatch = block.match(/Kredit\s*:\s*([\d.]+)/);
-          const tanggalMatch = block.match(/Tanggal\s*:\s*(.+)/);
-          const brandMatch = block.match(/Brand\s*:\s*(.+)/);
-          if (kreditMatch) {
-            transaksiList.push({
-              tanggal: tanggalMatch ? tanggalMatch[1].trim() : '-',
-              kredit: Number(kreditMatch[1].replace(/\./g, '')),
-              brand: brandMatch ? brandMatch[1].trim() : '-'
-            });
-          }
+        // validasi response
+        if (!gw || gw.status !== 'success' || !gw.payment) {
+          logger.warn(`Gateway invalid for ${uniqueCode}: ${JSON.stringify(gw)}`);
+          continue;
         }
 
-        // Debug hasil parsing
-        console.log('✅ Parsed transaksi:', transaksiList);
+        const state = String(gw.payment.state || '').toLowerCase();
 
-        // Cocokkan nominal
-        const expectedAmount = deposit.amount;
-        const matched = transaksiList.find(t => t.kredit === expectedAmount);
+        // ✅ pending = biarin loop berikutnya cek lagi
+        if (state === 'pending') {
+          logger.info(`⏳ Payment pending for ${uniqueCode} (amount=${expectedAmount})`);
+          continue;
+        }
 
-        if (matched) {
-          const success = await processMatchingPayment(deposit, matched, uniqueCode);
+        // ✅ sukses = proses
+        if (state === 'success' || state === 'paid' || state === 'settlement') {
+          // kalau gateway ngasih detail transaksi, ambil aja
+          const matchedTx = Array.isArray(gw.result) && gw.result.length ? gw.result[0] : null;
+
+          const success = await processMatchingPayment(deposit, matchedTx, uniqueCode);
           if (success) {
-            logger.info(`Payment processed successfully for ${uniqueCode}`);
+            logger.info(`✅ Payment processed successfully for ${uniqueCode}`);
+
             delete global.pendingDeposits[uniqueCode];
             db.run('DELETE FROM pending_deposits WHERE unique_code = ?', [uniqueCode], (err) => {
               if (err) logger.error('Gagal hapus pending_deposits (success):', err.message);
             });
           }
+          continue;
         }
+
+        // state lain
+        logger.warn(`Payment state unknown for ${uniqueCode}: ${state}`);
       } catch (error) {
-        logger.error(`Error checking payment status for ${uniqueCode}:`, error.message);
+        logger.error(`Error checking payment status for ${uniqueCode}:`, error?.message || error);
       }
     }
   } catch (error) {
-    logger.error('Error in checkQRISStatus:', error);
+    logger.error('Error in checkQRISStatus:', error?.message || error);
   }
 }
 

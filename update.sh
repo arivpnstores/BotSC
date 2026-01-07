@@ -87,7 +87,7 @@ EOF
 cat >/etc/cron.d/backup_sellsc <<'EOF'
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-0 * * * * root /usr/bin/backup_sellsc
+0 0 * * * root /usr/bin/backup_sellsc
 EOF
 
 chmod +x /usr/bin/backup_sellsc
