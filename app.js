@@ -1821,7 +1821,7 @@ const qrBuffer = Buffer.from(qrResponse.data);
       `- Nominal Top Up: Rp ${amount}\n` +
       `- Admin Fee : Rp ${adminFee}\n` +
                   `⚠️ *Penting:* Mohon transfer sesuai nominal\n` +
-      `⏱️ Waktu: 5 menit\n\n` +
+      `⏱️ Waktu: 60 menit\n\n` +
                   `⚠️ *Catatan:*\n` +
                   `- Pembayaran akan otomatis terverifikasi\n` +
       `- Jika pembayaran berhasil, saldo akan otomatis ditambahkan`;
@@ -1941,7 +1941,7 @@ async function checkQRISStatus() {
       if (deposit.status !== 'pending') continue;
 
       const depositAge = Date.now() - deposit.timestamp;
-      if (depositAge > 5 * 60 * 1000) {
+      if (depositAge > 60 * 60 * 1000) {
         try {
           if (deposit.qrMessageId) {
             await bot.telegram.deleteMessage(deposit.userId, deposit.qrMessageId);
