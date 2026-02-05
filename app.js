@@ -4,8 +4,8 @@ const express = require('express');
 const { Telegraf } = require('telegraf');
 const app = express();
 const axios = require('axios');
-const { cekPayment } = require('./api-cekpayment-orkut');
 const winston = require('winston');
+const { exec } = require('child_process');
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -451,148 +451,139 @@ Gunakan perintah ini dengan format yang benar untuk menghindari kesalahan.
 bot.command('broadcast', async (ctx) => {
   const userId = ctx.message.from.id;
   if (!adminIds.includes(userId)) {
-      return ctx.reply('⛔ Anda tidak punya izin.');
+    return ctx.reply('⛔ Anda tidak punya izin.');
   }
 
-  const msg = ctx.message.reply_to_message 
-      ? ctx.message.reply_to_message.text 
-      : ctx.message.text.split(' ').slice(1).join(' ');
+  const msg = ctx.message.reply_to_message
+    ? ctx.message.reply_to_message.text
+    : ctx.message.text.split(' ').slice(1).join(' ');
 
-  if (!msg) {
-      return ctx.reply('⚠️ Harap isi pesan broadcast.');
+  if (!msg) return ctx.reply('⚠️ Harap isi pesan broadcast.');
+
+  ctx.reply('📢 Broadcast dimulai...');
+
+  db.all("SELECT user_id FROM users", [], async (err, rows) => {
+    if (err) return ctx.reply('⚠️ Error ambil data user.');
+
+    let sukses = 0;
+    let gagal = 0;
+    let invalid = 0;
+
+    const delay = 30; // ms
+
+    for (const row of rows) {
+      try {
+        await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          chat_id: row.user_id,
+          text: msg
+        });
+
+        sukses++;
+      } catch (error) {
+        const code = error.response?.status;
+        gagal++;
+
+        // TIDAK MENGHAPUS USER
+        if (code === 400 || code === 403) {
+          invalid++;
+          console.log(`🚫 User invalid (tidak dihapus): ${row.user_id}`);
+        }
+
+        console.log(`❌ Gagal kirim ke ${row.user_id}: ${code}`);
+      }
+
+      await new Promise(r => setTimeout(r, delay));
+    }
+
+    ctx.reply(
+      `📣 *Broadcast selesai!*\n\n` +
+      `✔️ Berhasil: *${sukses}*\n` +
+      `❌ Gagal: *${gagal}*\n` +
+      `🚫 Invalid/Blocked: *${invalid}*`,
+      { parse_mode: 'Markdown' }
+    );
+  });
+});
+
+bot.command('broadcastfoto', async (ctx) => {
+  const userId = ctx.message.from.id;
+  if (!adminIds.includes(userId)) {
+    return ctx.reply('⛔ Anda tidak punya izin.');
+  }
+
+  const replyMsg = ctx.message.reply_to_message;
+
+  let isPhoto = false;
+  let msgText = '';
+  let photoFileId = '';
+
+  if (replyMsg) {
+    if (replyMsg.photo) {
+      isPhoto = true;
+      photoFileId = replyMsg.photo[replyMsg.photo.length - 1].file_id;
+      msgText = replyMsg.caption || '';
+    } else if (replyMsg.text) {
+      msgText = replyMsg.text;
+    }
+  } else {
+    msgText = ctx.message.text.split(' ').slice(1).join(' ');
+  }
+
+  if (!msgText && !photoFileId) {
+    return ctx.reply('⚠️ Harap isi pesan broadcast atau reply foto.');
   }
 
   ctx.reply('📢 Broadcast dimulai...');
 
   db.all("SELECT user_id FROM users", [], async (err, rows) => {
-      if (err) return ctx.reply('⚠️ Error ambil data user.');
+    if (err) return ctx.reply('⚠️ Error ambil data user.');
 
-      let sukses = 0;
-      let gagal = 0;
-      let dihapus = 0;
+    let sukses = 0;
+    let gagal = 0;
+    let invalid = 0;
 
-      const delay = 30; // aman biar ga kena limit (30 ms)
+    const delay = 30; // ms
 
-      for (const row of rows) {
-          try {
-              await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                  chat_id: row.user_id,
-                  text: msg
-              });
+    for (const row of rows) {
+      try {
+        if (isPhoto) {
+          await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+            chat_id: row.user_id,
+            photo: photoFileId,
+            caption: msgText
+          });
+        } else {
+          await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            chat_id: row.user_id,
+            text: msgText
+          });
+        }
 
-              sukses++;
+        sukses++;
+      } catch (error) {
+        const code = error.response?.status;
+        gagal++;
 
-          } catch (error) {
-              const code = error.response?.status;
+        // TIDAK MENGHAPUS USER
+        if (code === 400 || code === 403) {
+          invalid++;
+          console.log(`🚫 User invalid (tidak dihapus): ${row.user_id}`);
+        }
 
-              gagal++;
-
-              // AUTO DELETE USER MATI
-              if (code === 400 || code === 403) {
-                  db.run("DELETE FROM users WHERE user_id = ?", [row.user_id]);
-                  dihapus++;
-                  console.log(`🗑️ User invalid dihapus: ${row.user_id}`);
-              }
-
-              console.log(`❌ Gagal kirim ke ${row.user_id}: ${code}`);
-          }
-
-          // Anti limit Telegram
-          await new Promise(r => setTimeout(r, delay));
+        console.log(`❌ Gagal kirim ke ${row.user_id}: ${code}`);
       }
 
-      ctx.reply(
-          `📣 *Broadcast selesai!*\n\n` +
-          `✔️ Berhasil: *${sukses}*\n` +
-          `❌ Gagal: *${gagal}*\n` +
-          `🗑️ User dihapus: *${dihapus}*`,
-          { parse_mode: 'Markdown' }
-      );
+      await new Promise(r => setTimeout(r, delay));
+    }
+
+    ctx.reply(
+      `📣 *Broadcast selesai!*\n\n` +
+      `✔️ Berhasil: *${sukses}*\n` +
+      `❌ Gagal: *${gagal}*\n` +
+      `🚫 Invalid/Blocked: *${invalid}*`,
+      { parse_mode: 'Markdown' }
+    );
   });
-});
-
-bot.command('broadcastfoto', async (ctx) => {
-    const userId = ctx.message.from.id;
-    if (!adminIds.includes(userId)) {
-        return ctx.reply('⛔ Anda tidak punya izin.');
-    }
-
-    const replyMsg = ctx.message.reply_to_message;
-
-    // Cek apakah broadcast foto atau teks
-    let isPhoto = false;
-    let msgText = '';
-    let photoFileId = '';
-
-    if (replyMsg) {
-        if (replyMsg.photo) {
-            isPhoto = true;
-            // Ambil versi terbesar foto
-            photoFileId = replyMsg.photo[replyMsg.photo.length - 1].file_id;
-            msgText = replyMsg.caption || '';
-        } else if (replyMsg.text) {
-            msgText = replyMsg.text;
-        }
-    } else {
-        msgText = ctx.message.text.split(' ').slice(1).join(' ');
-    }
-
-    if (!msgText && !photoFileId) {
-        return ctx.reply('⚠️ Harap isi pesan broadcast atau reply foto.');
-    }
-
-    ctx.reply('📢 Broadcast dimulai...');
-
-    db.all("SELECT user_id FROM users", [], async (err, rows) => {
-        if (err) return ctx.reply('⚠️ Error ambil data user.');
-
-        let sukses = 0;
-        let gagal = 0;
-        let dihapus = 0;
-
-        const delay = 30; // ms
-
-        for (const row of rows) {
-            try {
-                if (isPhoto) {
-                    await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-                        chat_id: row.user_id,
-                        photo: photoFileId,
-                        caption: msgText
-                    });
-                } else {
-                    await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                        chat_id: row.user_id,
-                        text: msgText
-                    });
-                }
-
-                sukses++;
-
-            } catch (error) {
-                const code = error.response?.status;
-                gagal++;
-
-                if (code === 400 || code === 403) {
-                    db.run("DELETE FROM users WHERE user_id = ?", [row.user_id]);
-                    dihapus++;
-                    console.log(`🗑️ User invalid dihapus: ${row.user_id}`);
-                }
-
-                console.log(`❌ Gagal kirim ke ${row.user_id}: ${code}`);
-            }
-
-            await new Promise(r => setTimeout(r, delay));
-        }
-
-        ctx.reply(
-            `📣 *Broadcast selesai!*\n\n` +
-            `✔️ Berhasil: *${sukses}*\n` +
-            `❌ Gagal: *${gagal}*\n` +
-            `🗑️ User dihapus: *${dihapus}*`,
-            { parse_mode: 'Markdown' }
-        );
-    });
 });
 
 
@@ -637,7 +628,7 @@ OS Support
 
 --------------  
 3. Link Install ZIVPN (Ubuntu 20.04-24.04)::  
-\`apt update -y && apt install screen ufw ruby lolcat curl wget python3-pip -y && wget -q https://raw.githubusercontent.com/arivpnstores/udp-zivpn/main/install.sh -O /usr/local/bin/zivpn-manager && chmod +x /usr/local/bin/zivpn-manager && /usr/local/bin/zivpn-manager\`  
+\`apt update -y && wget -q https://raw.githubusercontent.com/arivpnstores/udp-zivpn/main/install.sh -O /usr/local/bin/install.sh && chmod +x /usr/local/bin/install.sh && /usr/local/bin/install.sh\`  
 
 --------------  
 Jika saat instalasi koneksi terputus, login VPS lagi dan jalankan:  
@@ -866,8 +857,8 @@ db.get('SELECT saldo FROM users WHERE user_id = ?', [ctx.from.id], async (err, r
 
       ctx.reply('🔧 *Memproses pendaftaran IP...*', { parse_mode: 'Markdown' });
 
-const maskedIp = ip.length > 3 
-  ? `${ip.slice(0, 3)}${'x'.repeat(ip.length - 3)}` 
+const maskedIp = ip.length > 1 
+  ? `${ip.slice(0, 1)}${'x'.repeat(ip.length - 1)}` 
   : ip;
 
 // 🔔 IP Created
@@ -884,7 +875,12 @@ await bot.telegram.sendMessage(
 ━━━━━━━━━━━━━━━━━━━━
 </blockquote>`,
   { parse_mode: 'HTML' }
-);
+    );
+  } catch (err) {
+    // ❗️INI KUNCI: gagal kirim grup ≠ gagal create akun
+    logger.warn(`Gagal kirim notif ke grup: ${err.message}`);
+  }
+}
       const { exec } = require('child_process');
       const shellCommand = `chmod +x ./modules/* && printf "%s\\n" "3" "${ip}" | ./modules/m-ftr-admin.sh && printf "%s\\n" "1" "${ip}" "${nama}" "${exp}" | ./modules/m-ftr-admin.sh`;
 
@@ -945,8 +941,8 @@ db.get('SELECT saldo FROM users WHERE user_id = ?', [ctx.from.id], async (err, r
         delete userState[ctx.chat.id];
         return ctx.reply('❌ *Saldo tidak cukup.*', { parse_mode: 'Markdown' });
       }
-const maskedIp = ip.length > 3 
-  ? `${ip.slice(0, 3)}${'x'.repeat(ip.length - 3)}` 
+const maskedIp = ip.length > 1 
+  ? `${ip.slice(0, 1)}${'x'.repeat(ip.length - 1)}` 
   : ip;
 // 🔔 IP Trial
 await bot.telegram.sendMessage(
@@ -961,7 +957,12 @@ await bot.telegram.sendMessage(
 ━━━━━━━━━━━━━━━━━━━━
 </blockquote>`,
   { parse_mode: 'HTML' }
-);
+    );
+  } catch (err) {
+    // ❗️INI KUNCI: gagal kirim grup ≠ gagal create akun
+    logger.warn(`Gagal kirim notif ke grup: ${err.message}`);
+  }
+}
       ctx.reply('🔧 *Memproses pendaftaran IP trial...*', { parse_mode: 'Markdown' });
 
       const { exec } = require('child_process');
@@ -1044,12 +1045,12 @@ if (state.step === 'input_ganti_ip') {
 
     const cleanOutput = stdout.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '').trim();
     
-const maskedIpLama = ipLama.length > 3 
-  ? `${ipLama.slice(0, 3)}${'x'.repeat(ipLama.length - 3)}` 
+const maskedIpLama = ipLama.length > 1 
+  ? `${ipLama.slice(0, 1)}${'x'.repeat(ipLama.length - 1)}` 
   : ipLama;
 
-const maskedIpBaru = ipBaru.length > 3 
-  ? `${ipBaru.slice(0, 3)}${'x'.repeat(ipBaru.length - 3)}` 
+const maskedIpBaru = ipBaru.length > 1 
+  ? `${ipBaru.slice(0, 1)}${'x'.repeat(ipBaru.length - 1)}` 
   : ipBaru;
 
 // 🔔 Notifikasi ke grup admin
@@ -1064,7 +1065,12 @@ await bot.telegram.sendMessage(
 ━━━━━━━━━━━━━━━━━━━━
 </blockquote>`,
   { parse_mode: 'HTML' }
-);
+    );
+  } catch (err) {
+    // ❗️INI KUNCI: gagal kirim grup ≠ gagal create akun
+    logger.warn(`Gagal kirim notif ke grup: ${err.message}`);
+  }
+}
 
     ctx.reply(
       `✅ *IP berhasil diganti!*\n🌐 *IP Lama:* \`${ipLama}\`\n🌐 *IP Baru:* \`${ipBaru}\`\n`,
@@ -1108,8 +1114,8 @@ db.get('SELECT saldo FROM users WHERE user_id = ?', [ctx.from.id], async (err, r
         delete userState[ctx.chat.id];
         return ctx.reply('❌ *Saldo tidak cukup. Minimal Rp5.000*', { parse_mode: 'Markdown' });
       }
-const maskedIp = ip.length > 3 
-  ? `${ip.slice(0, 3)}${'x'.repeat(ip.length - 3)}` 
+const maskedIp = ip.length > 1 
+  ? `${ip.slice(0, 1)}${'x'.repeat(ip.length - 1)}` 
   : ip;
 // 🔔 IP Renew
 await bot.telegram.sendMessage(
@@ -1123,7 +1129,12 @@ await bot.telegram.sendMessage(
 ━━━━━━━━━━━━━━━━━━━━
 </blockquote>`,
   { parse_mode: 'HTML' }
-);
+    );
+  } catch (err) {
+    // ❗️INI KUNCI: gagal kirim grup ≠ gagal create akun
+    logger.warn(`Gagal kirim notif ke grup: ${err.message}`);
+  }
+}
       ctx.reply('🔧 *Memproses perpanjangan IP...*', { parse_mode: 'Markdown' });
 
       const { exec } = require('child_process');
@@ -1195,8 +1206,8 @@ db.get('SELECT saldo FROM users WHERE user_id = ?', [ctx.from.id], async (err, r
         delete userState[ctx.chat.id];
         return ctx.reply('❌ *Saldo tidak cukup. Minimal Rp5.000*', { parse_mode: 'Markdown' });
       }
-const maskedIp = ip.length > 3 
-  ? `${ip.slice(0, 3)}${'x'.repeat(ip.length - 3)}` 
+const maskedIp = ip.length > 1 
+  ? `${ip.slice(0, 1)}${'x'.repeat(ip.length - 1)}` 
   : ip;
 // 🔔 IP Deleted
 await bot.telegram.sendMessage(
@@ -1209,7 +1220,12 @@ await bot.telegram.sendMessage(
 ━━━━━━━━━━━━━━━━━━━━
 </blockquote>`,
   { parse_mode: 'HTML' }
-);
+    );
+  } catch (err) {
+    // ❗️INI KUNCI: gagal kirim grup ≠ gagal create akun
+    logger.warn(`Gagal kirim notif ke grup: ${err.message}`);
+  }
+}
 
       ctx.reply('🔧 *Memproses Menghapus IP...*', { parse_mode: 'Markdown' });
 
@@ -1868,8 +1884,15 @@ const qrBuffer = Buffer.from(qrResponse.data);
 }
 
 const SOCKS_POOL = [
-  'aristore:1447@idnusa.rajaserverpremium.web.id:1080',
-  'aristore:1447@biznet.rajaserverpremium.web.id:1080',
+'aristore:1447@socks5.rajaserverpremium.web.id:1080',
+'aristore:1447@idtechno.rajaserverpremium.web.id:1080',
+'aristore:1447@idtechno2.rajaserverpremium.web.id:1080',
+'aristore:1447@biznet.rajaserverpremium.web.id:1080',
+'aristore:1447@biznet2.rajaserverpremium.web.id:1080',
+'aristore:1447@biznet3.rajaserverpremium.web.id:1080',
+'aristore:1447@biznet4.rajaserverpremium.web.id:1080',
+'aristore:1447@biznet5.rajaserverpremium.web.id:1080',
+'aristore:1447@biznet6.rajaserverpremium.web.id:1080',
 ];
 
 function getRandomProxy() {
@@ -1903,7 +1926,9 @@ curl --silent --compressed \
 `.trim();
 
     exec(curlCmd, { maxBuffer: 1024 * 1024 * 5 }, (err, stdout) => {
+     // logger.info('[QRIS][CURL]:' + (stdout || '(empty)'));
       const out = (stdout || '').trim();
+     logger.info(`[QRIS]: ${stdout}`);
 
       // kalau ada output, coba parse dulu (anggap sukses walau err)
       if (out) {
@@ -1984,6 +2009,21 @@ async function checkQRISStatus() {
         if (success) {
           logger.info(`✅ Payment processed successfully for ${uniqueCode}`);
 
+  // ==============================
+  // AUTO RUN WD PYTHON
+  // ==============================
+  exec(
+    '/usr/bin/python3 /root/wd.py >> /root/wd.log 2>&1',
+    { timeout: 60_000 }, // max 60 detik biar aman
+    (error) => {
+      if (error) {
+        logger.error('❌ WD.py error:', error.message);
+      } else {
+        logger.info('✅ WD.py executed successfully');
+      }
+    }
+  );
+  
           delete global.pendingDeposits[uniqueCode];
           db.run('DELETE FROM pending_deposits WHERE unique_code = ?', [uniqueCode], (err) => {
             if (err) logger.error('Gagal hapus pending_deposits (success):', err.message);
