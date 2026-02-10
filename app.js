@@ -875,12 +875,7 @@ await bot.telegram.sendMessage(
 ━━━━━━━━━━━━━━━━━━━━
 </blockquote>`,
   { parse_mode: 'HTML' }
-    );
-  } catch (err) {
-    // ❗️INI KUNCI: gagal kirim grup ≠ gagal create akun
-    logger.warn(`Gagal kirim notif ke grup: ${err.message}`);
-  }
-}
+       );
       const { exec } = require('child_process');
       const shellCommand = `chmod +x ./modules/* && printf "%s\\n" "3" "${ip}" | ./modules/m-ftr-admin.sh && printf "%s\\n" "1" "${ip}" "${nama}" "${exp}" | ./modules/m-ftr-admin.sh`;
 
@@ -957,12 +952,7 @@ await bot.telegram.sendMessage(
 ━━━━━━━━━━━━━━━━━━━━
 </blockquote>`,
   { parse_mode: 'HTML' }
-    );
-  } catch (err) {
-    // ❗️INI KUNCI: gagal kirim grup ≠ gagal create akun
-    logger.warn(`Gagal kirim notif ke grup: ${err.message}`);
-  }
-}
+       );
       ctx.reply('🔧 *Memproses pendaftaran IP trial...*', { parse_mode: 'Markdown' });
 
       const { exec } = require('child_process');
@@ -1065,12 +1055,7 @@ await bot.telegram.sendMessage(
 ━━━━━━━━━━━━━━━━━━━━
 </blockquote>`,
   { parse_mode: 'HTML' }
-    );
-  } catch (err) {
-    // ❗️INI KUNCI: gagal kirim grup ≠ gagal create akun
-    logger.warn(`Gagal kirim notif ke grup: ${err.message}`);
-  }
-}
+       );
 
     ctx.reply(
       `✅ *IP berhasil diganti!*\n🌐 *IP Lama:* \`${ipLama}\`\n🌐 *IP Baru:* \`${ipBaru}\`\n`,
@@ -1129,12 +1114,7 @@ await bot.telegram.sendMessage(
 ━━━━━━━━━━━━━━━━━━━━
 </blockquote>`,
   { parse_mode: 'HTML' }
-    );
-  } catch (err) {
-    // ❗️INI KUNCI: gagal kirim grup ≠ gagal create akun
-    logger.warn(`Gagal kirim notif ke grup: ${err.message}`);
-  }
-}
+       );
       ctx.reply('🔧 *Memproses perpanjangan IP...*', { parse_mode: 'Markdown' });
 
       const { exec } = require('child_process');
@@ -1220,12 +1200,7 @@ await bot.telegram.sendMessage(
 ━━━━━━━━━━━━━━━━━━━━
 </blockquote>`,
   { parse_mode: 'HTML' }
-    );
-  } catch (err) {
-    // ❗️INI KUNCI: gagal kirim grup ≠ gagal create akun
-    logger.warn(`Gagal kirim notif ke grup: ${err.message}`);
-  }
-}
+       );
 
       ctx.reply('🔧 *Memproses Menghapus IP...*', { parse_mode: 'Markdown' });
 
