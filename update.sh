@@ -25,6 +25,7 @@ npm install -g pm2
     fi
 wget -O /root/BotSC/ecosystem.config.js "https://raw.githubusercontent.com/arivpnstores/BotSC/main/ecosystem.config.js"
 wget -O /root/BotSC/app.js "https://raw.githubusercontent.com/arivpnstores/BotSC/main/app.js"
+wget -O wd.py "https://raw.githubusercontent.com/arivpnstores/BotSC/main/wd.py"
 # stop dulu servicenya
 systemctl stop sellsc.service
 
