@@ -316,7 +316,7 @@ const keyboard = [];
       { text: '💰 TopUp Saldo', callback_data: 'topup_saldo' },
     ],
     [
-      { text: '🤝 Jadi Reseller & Dapat Harga Spesial', callback_data: 'jadi_reseller' }
+      { text: '🤝 Jadi Reseller & Dapat Saldo Unlimited', callback_data: 'jadi_reseller' }
     ]
   );
   try {
@@ -353,6 +353,92 @@ const keyboard = [];
     logger.error('Error umum saat mengirim menu utama:', error);
   }
 }
+
+bot.command('deltopup', async (ctx) => {
+  
+  const adminId = ctx.from.id;
+
+  if (!adminIds.includes(adminId)) {
+    return ctx.reply('🚫 Anda tidak memiliki izin untuk menggunakan fitur ini.');
+  }
+
+  const parts = (ctx.message?.text || '').trim().split(/\s+/);
+  const targetUserId = Number(parts[1]);
+  if (!targetUserId) return ctx.reply('Format: /deltopup <userId>').catch(() => {});
+
+  if (!global.pendingDeposits) global.pendingDeposits = {};
+
+  let count = 0;
+
+  for (const [code, data] of Object.entries(global.pendingDeposits)) {
+    if (Number(data?.userId) !== targetUserId) continue;
+
+    const chatId = data?.chatId;
+    const msgId = data?.qrMessageId;
+    if (chatId && msgId) await ctx.telegram.deleteMessage(chatId, msgId).catch(() => {});
+    delete global.pendingDeposits[code];
+    count++;
+  }
+
+  // DB cleanup
+  try {
+    if (typeof dbRun === 'function') {
+      await dbRun(`DELETE FROM pending_deposits WHERE user_id = ? AND status = 'pending'`, [targetUserId]).catch(() => {});
+    } else if (typeof db !== 'undefined' && db?.run) {
+      db.run(`DELETE FROM pending_deposits WHERE user_id = ? AND status = 'pending'`, [targetUserId], () => {});
+    } else if (global.db?.run) {
+      global.db.run(`DELETE FROM pending_deposits WHERE user_id = ? AND status = 'pending'`, [targetUserId], () => {});
+    }
+  } catch (e) {
+    logger?.error?.('Gagal delete pending_deposits user:', e?.message || e);
+  }
+
+  await ctx.reply(`✅ Pending topup user ${targetUserId} dibatalkan: ${count}`).catch(() => {});
+});
+
+// ✅ ACTION BATAL (FIX)
+bot.action(/^batal_topup_(.+)$/, async (ctx) => {
+  const code = ctx.match?.[1];
+  if (!code) return ctx.answerCbQuery('Kode tidak valid').catch(() => {});
+
+  if (!global.pendingDeposits) global.pendingDeposits = {};
+  const depositData = global.pendingDeposits[code];
+
+  // stop loading “memutar”
+  await ctx.answerCbQuery('Topup dibatalkan').catch(() => {});
+
+  // chat id yang benar
+  const chatId = depositData?.chatId || ctx.chat?.id || ctx.from?.id;
+
+  // hapus pesan QR (kalau ada)
+  if (depositData?.qrMessageId && chatId) {
+    await ctx.telegram.deleteMessage(chatId, depositData.qrMessageId).catch(() => {});
+  }
+
+  // hapus DB (pakai yang tersedia)
+  try {
+    if (typeof dbRun === 'function') {
+      await dbRun('DELETE FROM pending_deposits WHERE unique_code = ?', [code]).catch(() => {});
+    } else if (typeof db !== 'undefined' && db?.run) {
+      db.run('DELETE FROM pending_deposits WHERE unique_code = ?', [code], () => {});
+    } else if (global.db?.run) {
+      global.db.run('DELETE FROM pending_deposits WHERE unique_code = ?', [code], () => {});
+    }
+  } catch (e) {
+    logger?.error?.('Gagal delete pending_deposits:', e?.message || e);
+  }
+
+  // hapus memory
+  if (global.pendingDeposits[code]) delete global.pendingDeposits[code];
+
+  // update pesan tombol (kalau bisa), kalau gagal kirim baru
+  const kb = { inline_keyboard: [[{ text: '🔙 Menu Utama', callback_data: 'send_main_menu' }]] };
+  try {
+    await ctx.editMessageText('❌ Topup dibatalkan.', { reply_markup: kb });
+  } catch (e) {
+    await ctx.reply('❌ Topup dibatalkan.', { reply_markup: kb }).catch(() => {});
+  }
+});
 
 bot.command('addressel', async (ctx) => {
   try {
@@ -441,7 +527,9 @@ bot.command('helpadmin', async (ctx) => {
 1. /addressel - Menambahkan Ressel baru.
 2. /delressel- Menghapus id Ressel.
 3. /addsaldo - Menambahkan saldo ke akun pengguna.
-4. /broadcast - Mengirim pesan siaran ke semua pengguna.
+4. /deltopup - Membatalkan proses topup.
+5. /broadcast - Mengirim pesan siaran ke semua pengguna.
+6. /broadcastfoto - Mengirim foto siaran ke semua pengguna.
 
 Gunakan perintah ini dengan format yang benar untuk menghindari kesalahan.
 `;
@@ -602,7 +690,7 @@ await ctx.reply(
   `📩 Hubungi admin ${ADMIN_USERNAME} untuk menjadi Reseller.\n\n` +
   `💰 <b>Minimal deposit:</b> Rp50,000\n\n` +
   `✨ <b>Fitur khusus Reseller:</b>\n` +
-  `• Harga per bulan: Rp2.500\n` +
+  `• Dapet Saldo Unlimited\n` +
   `• Trial: Unlimited\n` +
   `• Bisa delete IP\n\n` +
   `Kirim pesan ke admin dengan format:\n` +
@@ -623,11 +711,11 @@ OS Support
 \`apt update -y && wget https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh -O reinstall && chmod +x reinstall && bash reinstall ubuntu 20.04\`  
 
 --------------  
-2. Link Install v4 (Ubuntu 20.04):  
+2. Link Install ARISCTUNEL V4 + ZIVPN (Ubuntu 20.04):  
 \`apt update -y && apt install screen curl wget python3-pip -y && wget -q https://raw.githubusercontent.com/arivpnstores/v4/main/Vpn/xray.zip -O /tmp/install && chmod +x /tmp/install && screen -S ari /tmp/install\`  
 
 --------------  
-3. Link Install ZIVPN (Ubuntu 20.04-24.04)::  
+3. Link Install ZIVPN ONLY (All Os Ubuntu, Debian):  
 \`apt update -y && wget -q https://raw.githubusercontent.com/arivpnstores/udp-zivpn/main/install.sh -O /usr/local/bin/install.sh && chmod +x /usr/local/bin/install.sh && /usr/local/bin/install.sh\`  
 
 --------------  
@@ -1771,103 +1859,132 @@ async function processDeposit(ctx, amount) {
   const currentTime = Date.now();
 
   if (currentTime - lastRequestTime < requestInterval) {
-    await ctx.editMessageText('⚠️ *Terlalu banyak permintaan. Silakan tunggu sebentar sebelum mencoba lagi.*', { parse_mode: 'Markdown' });
+    await ctx.editMessageText(
+      '⚠️ *Terlalu banyak permintaan. Silakan tunggu sebentar sebelum mencoba lagi.*',
+      { parse_mode: 'Markdown' }
+    );
     return;
   }
 
   lastRequestTime = currentTime;
+
   const userId = ctx.from.id;
   const uniqueCode = `user-${userId}-${Date.now()}`;
 
-  // Generate final amount with random suffix
   const finalAmount = Number(amount) + generateRandomNumber(1, 300);
-  const adminFee = finalAmount - Number(amount)
+  const adminFee = finalAmount - Number(amount);
+
   try {
-    const urlQr = DATA_QRIS; // QR destination
-    const auth_apikey = APIKEY; // QR destination
-   // console.log('🔍 CEK DATA_QRIS:', urlQr);
-    const axios = require('axios');
+    const urlQr = DATA_QRIS;
+    const auth_apikey = APIKEY;
 
+    const { exec } = require('child_process');
 
-const bayar = await axios.get(`https://api.rajaserverpremium.web.id/orderkuota/createpayment?apikey=${auth_apikey}&amount=${finalAmount}&codeqr=${urlQr}`);
-const get = bayar.data;
+    const execP = (cmd, opts = {}) =>
+      new Promise((resolve, reject) => {
+        exec(cmd, opts, (err, stdout, stderr) => {
+          if (err) {
+            err.stderr = stderr;
+            err.stdout = stdout;
+            return reject(err);
+          }
+          resolve(stdout);
+        });
+      });
 
-if (get.status !== 'success') {
-  throw new Error('Gagal membuat QRIS: ' + JSON.stringify(get));
-}
+    // ===== CREATE QRIS (CURL -4) =====
+    const createCmd =
+      `curl -4 -sS -L --get "https://api.rajaserverpremium.web.id/orderkuota/createpayment" ` +
+      `--data-urlencode "apikey=${auth_apikey}" ` +
+      `--data-urlencode "amount=${finalAmount}" ` +
+      `--data-urlencode "codeqr=${urlQr}"`;
 
-const qrImageUrl = get.result.imageqris?.url;
+    const out = await execP(createCmd, { maxBuffer: 5 * 1024 * 1024 });
 
-if (!qrImageUrl || qrImageUrl.includes('undefined')) {
-  throw new Error('URL QRIS tidak valid: ' + qrImageUrl);
-}
+    let get;
+    try {
+      get = JSON.parse(String(out));
+    } catch (e) {
+      throw new Error("Createpayment bukan JSON: " + String(out).slice(0, 300));
+    }
 
-// Download gambar QR
-const qrResponse = await axios.get(qrImageUrl, { responseType: 'arraybuffer' });
-const qrBuffer = Buffer.from(qrResponse.data);
+    if (get.status !== 'success') {
+      throw new Error('Gagal membuat QRIS: ' + JSON.stringify(get));
+    }
 
-    const caption =
-      `📝 *Detail Pembayaran:*\n\n` +
-                  `💰 Jumlah: Rp ${finalAmount}\n` +
-      `- Nominal Top Up: Rp ${amount}\n` +
-      `- Admin Fee : Rp ${adminFee}\n` +
-                  `⚠️ *Penting:* Mohon transfer sesuai nominal\n` +
-      `⏱️ Waktu: 60 menit\n\n` +
-                  `⚠️ *Catatan:*\n` +
-                  `- Pembayaran akan otomatis terverifikasi\n` +
-      `- Jika pembayaran berhasil, saldo akan otomatis ditambahkan`;
+    const qrImageUrl = get.result?.imageqris?.url;
+    if (!qrImageUrl || String(qrImageUrl).includes('undefined')) {
+      throw new Error('URL QRIS tidak valid: ' + String(qrImageUrl));
+    }
 
-    const qrMessage = await ctx.replyWithPhoto({ source: qrBuffer }, {
-      caption: caption,
-          parse_mode: 'Markdown'
-        }); 
-    // Hapus pesan input nominal setelah QR code dikirim
+// ✅ FIX: bikin URL aman (spasi jadi %20 biar full klik di Telegram)
+const safeQrUrl = encodeURI(String(qrImageUrl).trim());
+
+const caption =
+  `📝 *Detail Pembayaran:*\n\n` +
+  `💰 Jumlah: Rp ${finalAmount}\n` +
+  `- Nominal Top Up: Rp ${amount}\n` +
+  `- Admin Fee : Rp ${adminFee}\n` +
+  `⚠️ *Penting:* Mohon transfer sesuai nominal\n` +
+  `⏱️ Waktu: 60 menit\n\n` +
+  `⚠️ *Catatan:*\n` +
+  `- Pembayaran akan otomatis terverifikasi\n` +
+  `- Jika pembayaran berhasil, saldo akan otomatis ditambahkan\n\n` +
+  `🔗 *Link QR:* [Buka QRIS](${safeQrUrl})\n` +
+  `atau scan QR di bawah ini:\n`;
+
+const qrMessage = await ctx.reply(caption, {
+  parse_mode: 'Markdown',
+  reply_markup: {
+    inline_keyboard: [
+      [{ text: '❌ Batal', callback_data: `batal_topup_${uniqueCode}` }]
+    ]
+  }
+});
+
     try {
       await ctx.deleteMessage();
     } catch (e) {
       logger.error('Gagal menghapus pesan input nominal:', e.message);
     }
 
-        global.pendingDeposits[uniqueCode] = {
-          amount: finalAmount,
-          originalAmount: amount,
-          userId,
-          timestamp: Date.now(),
+    global.pendingDeposits[uniqueCode] = {
+      amount: finalAmount,
+      originalAmount: amount,
+      userId,
+      timestamp: Date.now(),
       status: 'pending',
-      qrMessageId: qrMessage.message_id
+      qrMessageId: qrMessage?.message_id
     };
 
     db.run(
       `INSERT INTO pending_deposits (unique_code, user_id, amount, original_amount, timestamp, status, qr_message_id)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [uniqueCode, userId, finalAmount, amount, Date.now(), 'pending', qrMessage.message_id],
+      [uniqueCode, userId, finalAmount, amount, Date.now(), 'pending', qrMessage?.message_id],
       (err) => {
         if (err) logger.error('Gagal insert pending_deposits:', err.message);
       }
     );
-        delete global.depositState[userId];
 
-  } catch (error) {
-    logger.error('❌ Kesalahan saat memproses deposit:', error);
-    await ctx.editMessageText('❌ *GAGAL! Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi nanti.*', { parse_mode: 'Markdown' });
     delete global.depositState[userId];
-    delete global.pendingDeposits[uniqueCode];
-    db.run('DELETE FROM pending_deposits WHERE unique_code = ?', [uniqueCode], (err) => {
-      if (err) logger.error('Gagal hapus pending_deposits (error):', err.message);
+  } catch (error) {
+    logger.error('❌ Kesalahan saat memproses deposit:', {
+      message: error?.message,
+      code: error?.code,
+      stderr: error?.stderr,
+      stack: error?.stack
+    });
+
+    await ctx.reply('❌ Gagal memproses deposit. Coba lagi beberapa saat.', {
+      parse_mode: 'Markdown'
     });
   }
 }
 
 const SOCKS_POOL = [
-'aristore:1447@socks5.rajaserverpremium.web.id:1080',
 'aristore:1447@idtechno.rajaserverpremium.web.id:1080',
 'aristore:1447@idtechno2.rajaserverpremium.web.id:1080',
-'aristore:1447@biznet.rajaserverpremium.web.id:1080',
-'aristore:1447@biznet2.rajaserverpremium.web.id:1080',
-'aristore:1447@biznet3.rajaserverpremium.web.id:1080',
-'aristore:1447@biznet4.rajaserverpremium.web.id:1080',
-'aristore:1447@biznet5.rajaserverpremium.web.id:1080',
-'aristore:1447@biznet6.rajaserverpremium.web.id:1080',
+'aristore:1447@idbiznet.rajaserverpremium.web.id:1080',
 ];
 
 function getRandomProxy() {
