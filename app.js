@@ -89,7 +89,7 @@ const bot = new Telegraf(BOT_TOKEN);
 let ADMIN_USERNAME = '@ARI_VPN_STORE';
 const adminIds = ADMIN;
 logger.info('Bot initialized');
-
+/*
 (async () => {
   try {
     const adminId = Array.isArray(adminIds) ? adminIds[0] : adminIds;
@@ -101,7 +101,7 @@ logger.info('Bot initialized');
     logger.warn('Tidak bisa ambil username admin otomatis.');
   }
 })();
-
+*/
 const db = new sqlite3.Database('./sellsc.db', (err) => {
   if (err) {
     logger.error('Kesalahan koneksi SQLite3:', err.message);
@@ -292,7 +292,7 @@ dalam layanan VPN dengan bot kami!
 • 🛡️ Admin Panel  : /helpadmin
 
 👨‍💻 <b>Pembuat:</b> @ARI_VPN_STORE
-🛠️ <b>Credit:</b> ARI STORE 
+🛠️ <b>Credit:</b> ARI STORE
 🔧 <b>Base:</b> FighterTunnel
 👥 Pengguna BOT: ${jumlahPengguna}
 ⏱️ Latency: ${latency} ms
@@ -708,15 +708,15 @@ OS Support
 ☞ Ubuntu 20.04  
 --------------  
 1. Link OS Ubuntu 20.04 :  
-\`apt update -y && wget https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh -O reinstall && chmod +x reinstall && bash reinstall ubuntu 20.04\`  
+\`apt update -y && apt install --reinstall wget curl -y && wget -q https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh -O reinstall && chmod +x reinstall && bash reinstall ubuntu 20.04\`  
 
 --------------  
 2. Link Install ARISCTUNEL V4 + ZIVPN (Ubuntu 20.04):  
-\`apt update -y && apt install screen curl wget python3-pip -y && wget -q https://raw.githubusercontent.com/arivpnstores/v4/main/Vpn/xray.zip -O /tmp/install && chmod +x /tmp/install && screen -S ari /tmp/install\`  
+\`apt update -y && apt install --reinstall wget curl -y && apt install screen python3-pip -y &&  wget -q https://raw.githubusercontent.com/arivpnstores/v4/main/Vpn/xray.zip -O /tmp/install && chmod +x /tmp/install && screen -S ari /tmp/install\`  
 
 --------------  
 3. Link Install ZIVPN ONLY (All Os Ubuntu, Debian):  
-\`apt update -y && wget -q https://raw.githubusercontent.com/arivpnstores/udp-zivpn/main/install.sh -O /usr/local/bin/install.sh && chmod +x /usr/local/bin/install.sh && /usr/local/bin/install.sh\`  
+\`apt update -y && apt install --reinstall wget curl -y &&  wget -q https://raw.githubusercontent.com/arivpnstores/udp-zivpn/main/install.sh -O /usr/local/bin/install.sh && chmod +x /usr/local/bin/install.sh && /usr/local/bin/install.sh\`  
 
 --------------  
 Jika saat instalasi koneksi terputus, login VPS lagi dan jalankan:  
@@ -1597,7 +1597,7 @@ async function handleDepositState(ctx, userId, data) {
   // Cek apakah user reseller
   const isReseller = await isUserReseller(userId);
   const statusReseller = isReseller ? 'Reseller' : 'Bukan Reseller';
-  const minDeposit = isReseller ? 50000 : 5000; // 100k untuk reseller, 1k untuk user biasa
+  const minDeposit = isReseller ? 50000 : 1000; // 100k untuk reseller, 1k untuk user biasa
 
   let currentAmount = global.depositState[userId].amount || '';
 
@@ -1894,7 +1894,7 @@ async function processDeposit(ctx, amount) {
 
     // ===== CREATE QRIS (CURL -4) =====
     const createCmd =
-      `curl -4 -sS -L --get "https://api.rajaserverpremium.web.id/orderkuota/createpayment" ` +
+      `curl -4 -sS -L --get "https://api.rajaserver.web.id/orderkuota/createpayment" ` +
       `--data-urlencode "apikey=${auth_apikey}" ` +
       `--data-urlencode "amount=${finalAmount}" ` +
       `--data-urlencode "codeqr=${urlQr}"`;
@@ -1982,9 +1982,9 @@ const qrMessage = await ctx.reply(caption, {
 }
 
 const SOCKS_POOL = [
-'aristore:1447@idtechno.rajaserverpremium.web.id:1080',
-'aristore:1447@idtechno2.rajaserverpremium.web.id:1080',
-'aristore:1447@idbiznet.rajaserverpremium.web.id:1080',
+'aristore:1447@idtechno.rajaserver.web.id:1080',
+'aristore:1447@idtechno2.rajaserver.web.id:1080',
+'aristore:1447@idbiznet.rajaserver.web.id:1080',
 ];
 
 function getRandomProxy() {
@@ -2005,7 +2005,6 @@ function cekQRISOrderKuota() {
 
     const curlCmd = `
 curl --silent --compressed \
-  --connect-timeout 10 --max-time 20 \
   --socks5-hostname '${hostport}' \
   --proxy-user '${user}:${pass}' \
   -X POST '${WEB_MUTASI}' \
