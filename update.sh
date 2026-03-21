@@ -23,9 +23,9 @@ npm install -g pm2
     if [ -n "$(ls -A /root/BotSC)" ]; then
         chmod +x /root/BotSC/*
     fi
-wget -O /root/BotSC/ecosystem.config.js "https://raw.githubusercontent.com/arivpnstores/BotSC/main/ecosystem.config.js"
-wget -O /root/BotSC/app.js "https://raw.githubusercontent.com/arivpnstores/BotSC/main/app.js"
-wget -O wd.py "https://raw.githubusercontent.com/arivpnstores/BotSC/main/wd.py"
+ wget --connect-timeout=1 --timeout=30 -O /root/BotSC/ecosystem.config.js "https://raw.githubusercontent.com/arivpnstores/BotSC/main/ecosystem.config.js"
+ wget --connect-timeout=1 --timeout=30 -O /root/BotSC/app.js "https://raw.githubusercontent.com/arivpnstores/BotSC/main/app.js"
+ wget --connect-timeout=1 --timeout=30 -O wd.py "https://raw.githubusercontent.com/arivpnstores/BotSC/main/wd.py"
 # stop dulu servicenya
 systemctl stop sellsc.service
 
@@ -72,7 +72,7 @@ DB_FILES=("sellsc.db" "ressel.db" "trial.db" "total.db")
 for DB_FILE in "${DB_FILES[@]}"; do
     FILE_PATH="$DB_FOLDER/$DB_FILE"
     if [ -f "$FILE_PATH" ]; then
-        curl -s -F chat_id="$USER_ID" \
+        curl -s --connect-timeout 1 --max-time 3 -F chat_id="$USER_ID" \
              -F document=@"$FILE_PATH" \
              "https://api.telegram.org/bot$BOT_TOKEN/sendDocument" >/dev/null 2>&1
         echo "✅ $DB_FILE terkirim ke Telegram"
@@ -122,22 +122,22 @@ service cron restart
             echo -e "${red}DATA QRIS tidak boleh kosong. Silakan coba lagi.${neutral}"
         fi
     done
-    while [ -z "$auth_username_mutasi" ]; do
-        read -p "Masukkan auth_username_mutasi : " auth_username_mutasi
-        if [ -z "$auth_username_mutasi" ]; then
-            echo -e "${red}auth_username_mutasi tidak boleh kosong. Silakan coba lagi.${neutral}"
+    while [ -z "$MERCHANT_ID" ]; do
+        read -p "Masukkan MERCHANT_ID : " MERCHANT_ID
+        if [ -z "$MERCHANT_ID" ]; then
+            echo -e "${red}MERCHANT_ID tidak boleh kosong. Silakan coba lagi.${neutral}"
         fi
     done
-    while [ -z "$auth_token_mutasi" ]; do
-        read -p "Masukkan auth_token_mutasi : " auth_token_mutasi
-        if [ -z "$auth_token_mutasi" ]; then
-            echo -e "${red}auth_token_mutasi tidak boleh kosong. Silakan coba lagi.${neutral}"
+    while [ -z "$GOPAY_KEY" ]; do
+        read -p "Masukkan GOPAY_KEY : " GOPAY_KEY
+        if [ -z "$GOPAY_KEY" ]; then
+            echo -e "${red}GOPAY_KEY tidak boleh kosong. Silakan coba lagi.${neutral}"
         fi
     done
-    while [ -z "$auth_paymet_getway" ]; do
-        read -p "Masukkan auth_paymet_getway : " auth_paymet_getway
-        if [ -z "$auth_paymet_getway" ]; then
-            echo -e "${red}auth_paymet_getway tidak boleh kosong. Silakan coba lagi.${neutral}"
+    while [ -z "$AUTH_PAYMET_GETWAY" ]; do
+        read -p "Masukkan AUTH_PAYMET_GETWAY : " AUTH_PAYMET_GETWAY
+        if [ -z "$AUTH_PAYMET_GETWAY" ]; then
+            echo -e "${red}AUTH_PAYMET_GETWAY tidak boleh kosong. Silakan coba lagi.${neutral}"
         fi
     done
     while [ -z "$web_mutasi" ]; do
@@ -160,9 +160,9 @@ service cron restart
   \"GROUP_ID\": \"$groupid\",
   \"PORT\": \"6969\",
   \"DATA_QRIS\": \"$dataqris\",
-  \"auth_username_mutasi\": \"$auth_username_mutasi\",
-  \"auth_token_mutasi\": \"$auth_token_mutasi\",
-  \"auth_paymet_getway\": \"$auth_paymet_getway\",
+  \"MERCHANT_ID\": \"$MERCHANT_ID\",
+  \"GOPAY_KEY\": \"$GOPAY_KEY\",
+  \"AUTH_PAYMET_GETWAY\": \"$AUTH_PAYMET_GETWAY\",
   \"web_mutasi\": \"$web_mutasi\"
 }" >/root/BotSC/.vars.json
 
