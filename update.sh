@@ -127,10 +127,7 @@ done
 if [ "$pilihan" == "1" ]; then
   echo "=== Setup GoPay ==="
   
-  read -p "Masukkan DATA QRIS: " dataqris
   read -p "Masukkan GOPAY_KEY: " GOPAY_KEY
-  read -p "Masukkan MERCHANT_ID: " MERCHANT_ID
-  read -p "Masukkan AUTH_PAYMET_GETWAY: " AUTH_PAYMET_GETWAY
 
   rm -f /root/BotSC/.vars.json
   echo "{
@@ -140,10 +137,7 @@ if [ "$pilihan" == "1" ]; then
   \"GROUP_ID\": \"$groupid\",
   \"PORT\": \"6969\",
   \"PAYMENT\": \"GOPAY\",
-  \"DATA_QRIS\": \"$dataqris\",
-  \"GOPAY_KEY\": \"$GOPAY_KEY\",
-  \"MERCHANT_ID\": \"$MERCHANT_ID\",
-  \"AUTH_PAYMET_GETWAY\": \"$AUTH_PAYMET_GETWAY\"
+  \"GOPAY_KEY\": \"$GOPAY_KEY\"
 }" >/root/BotSC/.vars.json
 
 fi
@@ -157,8 +151,6 @@ if [ "$pilihan" == "2" ]; then
   read -p "Masukkan DATA QRIS ORKUT: " DATA_QRIS_ORKUT
   read -p "Masukkan AUTH USERNAME: " AUTH_USERNAME_ORKUT
   read -p "Masukkan AUTH TOKEN: " AUTH_TOKEN_ORKUT
-  read -p "Masukkan WEB MUTASI: " WEB_MUTILASI_ORKUT
-  read -p "Masukkan AUTH_PAYMET_GETWAY: " AUTH_PAYMET_GETWAY
 
   rm -f /root/BotSC/.vars.json
   echo "{
@@ -170,9 +162,7 @@ if [ "$pilihan" == "2" ]; then
   \"PAYMENT\": \"ORKUT\",
   \"DATA_QRIS_ORKUT\": \"$DATA_QRIS_ORKUT\",
   \"AUTH_USERNAME_ORKUT\": \"$AUTH_USERNAME_ORKUT\",
-  \"AUTH_TOKEN_ORKUT\": \"$AUTH_TOKEN_ORKUT\",
-  \"WEB_MUTILASI_ORKUT\": \"$WEB_MUTILASI_ORKUT\",
-  \"AUTH_PAYMET_GETWAY\": \"$AUTH_PAYMET_GETWAY\"
+  \"AUTH_TOKEN_ORKUT\": \"$AUTH_TOKEN_ORKUT\"
 }" >/root/BotSC/.vars.json
 
 fi
