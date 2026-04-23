@@ -310,10 +310,28 @@ const keyboard = [];
     ],
     [
       { text: '🔄 Ganti SC TUNNEL', callback_data: 'ganti_ip' },
-      { text: '🔗 Link Install', callback_data: 'link_install' }
+      { text: '💰 TopUp Saldo', callback_data: 'topup_saldo' }
     ],
     [
-      { text: '💰 TopUp Saldo', callback_data: 'topup_saldo' },
+      { text: '🔗 FIX IPV4 ONLY + DNS', callback_data: 'install_fix' }
+    ],
+    [
+      { text: '🔗 INSTALL ARISCTUNEL V7', callback_data: 'install_v7' }
+    ],
+    [
+      { text: '🔗 INSTALL ARISCTUNEL V4', callback_data: 'install_v4' }
+    ],
+    [
+      { text: '🔗 INSTALL SC ZIVPN ONLY', callback_data: 'install_zivpn' }
+    ],
+    [
+      { text: '🔗 UPDATE SCRIPT V4 V7 ZIVPN', callback_data: 'update_script' }
+    ],
+    [
+      { text: '🔗 INSTALL SC REBULID ALL OS', callback_data: 'install_os' }
+    ],
+    [
+      { text: '🔗 INSTALL API & BOT VPN', callback_data: 'auto_order' }
     ],
     [
       { text: '🤝 Jadi Reseller & Dapat Saldo Unlimited', callback_data: 'jadi_reseller' }
@@ -699,29 +717,255 @@ await ctx.reply(
 );
 });
 
-bot.action('link_install', async (ctx) => {
+bot.action('install_fix', async (ctx) => {
   try { await ctx.answerCbQuery(); } catch(e) {}
 
-  const message = `
+const message = `
 --------------  
-OS Support  
-☞ Ubuntu 20.04  
+🔗 LINK FIX IPV4 ONLY + DNS
 --------------  
-1. Link OS Ubuntu 20.04 :  
-\`apt update -y && apt install --reinstall wget curl -y && wget -q https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh -O reinstall && chmod +x reinstall && bash reinstall ubuntu 20.04\`  
+OS: Ubuntu 20.04-24.04, Debian 10-12, Kali Linux
 
---------------  
-2. Link Install ARISCTUNEL V4 + ZIVPN (Ubuntu 20.04):  
-\`apt update -y && apt install --reinstall wget curl -y && apt install screen python3-pip -y &&  wget -q https://raw.githubusercontent.com/arivpnstores/v4/main/Vpn/xray.zip -O /tmp/install && chmod +x /tmp/install && screen -S ari /tmp/install\`  
+\`\`\`
+rm -f /etc/resolv.conf
+touch /etc/sysctl.conf
+sed -i '/disable_ipv6/d' /etc/sysctl.conf
+echo "nameserver 1.1.1.1" > /etc/resolv.conf
+echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+echo "net.ipv6.conf.all.disable_ipv6 = 1" >> /etc/sysctl.conf
+echo "net.ipv6.conf.default.disable_ipv6 = 1" >> /etc/sysctl.conf
+sysctl -p
+\`\`\`
 
---------------  
-3. Link Install ZIVPN ONLY (All Os Ubuntu, Debian):  
-\`apt update -y && apt install --reinstall wget curl -y &&  wget -q https://raw.githubusercontent.com/arivpnstores/udp-zivpn/main/install.sh -O /usr/local/bin/install.sh && chmod +x /usr/local/bin/install.sh && /usr/local/bin/install.sh\`  
-
---------------  
-Jika saat instalasi koneksi terputus, login VPS lagi dan jalankan:  
-☞ \`screen -r ari\` atau \`screen -d -r ari\`  
 --------------
+`;
+
+  await ctx.reply(message, { parse_mode: 'Markdown' });
+});
+
+bot.action('install_v7', async (ctx) => {
+  try { await ctx.answerCbQuery(); } catch(e) {}
+
+const message = `
+--------------  
+🔗 LINK INSTALL SC ARISCTUNEL V7  
+--------------  
+OS: Ubuntu 20.04-24.04, Debian 10-12, Kali Linux
+
+\`\`\`
+apt update -y && apt upgrade -y --fix-missing && apt install --reinstall wget curl screen -y && screen -S setup-session bash -c "wget -q https://raw.githubusercontent.com/arivpnstores/v7/main/install.sh && chmod +x install.sh && ./install.sh"
+\`\`\`
+--------------
+Jika saat instalasi koneksi terputus, login VPS lagi dan jalankan:
+☞ \`screen -r setup-session \` atau \`screen -d -r setup-session\`
+--------------
+`;
+
+  await ctx.reply(message, { parse_mode: 'Markdown' });
+});
+
+bot.action('install_zivpn', async (ctx) => {
+  try { await ctx.answerCbQuery(); } catch(e) {}
+
+const message = `
+--------------  
+🔗 LINK INSTALL SC ZIVPN  
+--------------  
+OS: Ubuntu 20.04-24.04, Debian 10-12, Kali Linux
+
+\`\`\`
+apt update -y && apt install --reinstall wget curl screen -y && wget -q https://raw.githubusercontent.com/arivpnstores/udp-zivpn/main/install.sh -O /usr/local/bin/install.sh && chmod +x /usr/local/bin/install.sh && screen -S setup-session bash -c "/usr/local/bin/install.sh"
+\`\`\`
+
+--------------
+Jika saat instalasi koneksi terputus, login VPS lagi dan jalankan:
+☞ \`screen -r setup-session \` atau \`screen -d -r setup-session\`
+--------------
+`;
+
+  await ctx.reply(message, { parse_mode: 'Markdown' });
+});
+
+bot.action('install_v4', async (ctx) => {
+  try { await ctx.answerCbQuery(); } catch(e) {}
+
+const message = `
+--------------  
+🔗 LINK INSTALL SC V4  
+--------------  
+OS: Ubuntu 20.04
+
+\`\`\`
+apt update -y && apt install --reinstall wget curl -y && apt install screen python3-pip -y && wget -q https://raw.githubusercontent.com/arivpnstores/v4/main/Vpn/xray.zip -O /tmp/install && chmod +x /tmp/install && screen -S setup-session bash -c "/tmp/install"
+\`\`\`
+
+--------------
+Jika saat instalasi koneksi terputus, login VPS lagi dan jalankan:
+☞ \`screen -r setup-session \` atau \`screen -d -r setup-session\`
+--------------
+`;
+
+  await ctx.reply(message, { parse_mode: 'Markdown' });
+});
+
+bot.action('auto_order', async (ctx) => {
+  try { await ctx.answerCbQuery(); } catch (e) {}
+
+  const message = `
+━━━━━━━━━━━━━━━━━━━━
+🚀 API ARISCTUNNEL V4 & V7
+━━━━━━━━━━━━━━━━━━━━
+
+⚡ API VPS AUTO VPN SYSTEM
+(Node.js + Express)
+
+━━━━━━━━━━━━━━━━━━━━
+📥 INSTALL API
+\`\`\`
+wget -q https://raw.githubusercontent.com/arivpnstores/api-ari/main/api.sh && chmod +x api.sh && ./api.sh && rm -rf api.sh
+\`\`\`
+
+🗑️ UNINSTALL API
+\`\`\`
+wget -q https://raw.githubusercontent.com/arivpnstores/api-ari/main/del.sh && chmod +x del.sh && ./del.sh && rm -rf del.sh
+\`\`\`
+
+━━━━━━━━━━━━━━━━━━━━
+🤖 AUTO ORDER BOT READY
+━━━━━━━━━━━━━━━━━━━━
+
+📌 BOT VPN 2 (ARISCTUNNEL)
+👉 https://github.com/arivpnstores/BotVPN2
+
+📌 BOT ZIVPN (AUTO RUN READY)
+👉 https://github.com/arivpnstores/BotZiVPN
+
+✔ Tidak perlu install manual tambahan
+✔ Langsung connect ke API
+✔ Support SSH / VMESS / VLESS / TROJAN / SHADOWSOCKS
+✔ Trial + Renew otomatis
+
+━━━━━━━━━━━━━━━━━━━━
+⚠️ NOTE:
+- API harus sudah aktif sebelum bot dijalankan
+- Pastikan config API sesuai di bot
+━━━━━━━━━━━━━━━━━━━━
+`;
+
+  await ctx.reply(message, { parse_mode: 'Markdown' });
+});
+
+bot.action('update_script', async (ctx) => {
+  try { await ctx.answerCbQuery(); } catch (e) {}
+
+  const message = `
+━━━━━━━━━━━━━━━━━━━━
+🔄 UPDATE SCRIPT PANEL
+━━━━━━━━━━━━━━━━━━━━
+
+📌 ZIVPN UDP UPDATE
+\`\`\`
+wget -q https://raw.githubusercontent.com/arivpnstores/udp-zivpn/main/update.sh -O /usr/local/bin/update-manager && chmod +x /usr/local/bin/update-manager && /usr/local/bin/update-manager
+\`\`\`
+
+━━━━━━━━━━━━━━━━━━━━
+
+📌 ARISCTUNNEL V4 UPDATE
+\`\`\`
+wget -O update.sh https://raw.githubusercontent.com/arivpnstores/v4/main/update.sh && chmod +x update.sh && ./update.sh && wget https://raw.githubusercontent.com/arivpnstores/v4/main/fix-izin.sh && chmod +x fix-izin.sh && ./fix-izin.sh
+\`\`\`
+
+━━━━━━━━━━━━━━━━━━━━
+
+📌 ARISCTUNNEL V7 UPDATE
+\`\`\`
+wget -O update.sh https://raw.githubusercontent.com/arivpnstores/v7/main/update.sh && chmod +x update.sh && ./update.sh
+\`\`\`
+
+━━━━━━━━━━━━━━━━━━━━
+⚠️ NOTE:
+- Pastikan VPS stabil saat update
+- Jangan hentikan proses update
+━━━━━━━━━━━━━━━━━━━━
+`;
+
+  await ctx.reply(message, { parse_mode: 'Markdown' });
+});
+
+bot.action('install_os', async (ctx) => {
+  try { await ctx.answerCbQuery(); } catch (e) {}
+
+  const message = `
+━━━━━━━━━━━━━━━━━━━━
+🔗 AUTO REINSTALL VPS OS
+━━━━━━━━━━━━━━━━━━━━
+
+📌 UBUNTU 20.04
+\`\`\`
+wget https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh -O reinstall.sh && chmod +x reinstall.sh && bash reinstall.sh ubuntu 20.04
+\`\`\`
+
+📌 UBUNTU 22.04
+\`\`\`
+wget https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh -O reinstall.sh && chmod +x reinstall.sh && bash reinstall.sh ubuntu 22.04
+\`\`\`
+
+📌 UBUNTU 24.04
+\`\`\`
+wget https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh -O reinstall.sh && chmod +x reinstall.sh && bash reinstall.sh ubuntu 24.04
+\`\`\`
+
+📌 DEBIAN 11
+\`\`\`
+wget https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh -O reinstall.sh && chmod +x reinstall.sh && bash reinstall.sh debian 11
+\`\`\`
+
+📌 DEBIAN 12
+\`\`\`
+wget https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh -O reinstall.sh && chmod +x reinstall.sh && bash reinstall.sh debian 12
+\`\`\`
+
+📌 KALI LINUX
+\`\`\`
+wget https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh -O reinstall.sh && chmod +x reinstall.sh && bash reinstall.sh kali
+\`\`\`
+
+━━━━━━━━━━━━━━━━━━━━
+🪟 WINDOWS SERVER
+
+📌 WINDOWS SERVER 2025
+\`\`\`
+wget https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh -O reinstall.sh && chmod +x reinstall.sh && bash reinstall.sh windows \\
+--image-name "Windows Server 2025 SERVERDATACENTER" \\
+--iso "https://go.microsoft.com/fwlink/?linkid=2293312" \\
+--rdp-port "22"
+\`\`\`
+
+📌 WINDOWS SERVER 2022
+\`\`\`
+wget https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh -O reinstall.sh && chmod +x reinstall.sh && bash reinstall.sh windows \\
+--image-name "Windows Server 2022 SERVERDATACENTER" \\
+--iso "https://software-static.download.prss.microsoft.com/sg/download/888969d5-f34g-4e03-ac9d-1f9786c66749/SERVER_EVAL_x64FRE_en-us.iso" \\
+--rdp-port "22"
+\`\`\`
+
+📌 WINDOWS SERVER 2016
+\`\`\`
+wget https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh -O reinstall.sh && chmod +x reinstall.sh && bash reinstall.sh windows \\
+--image-name "Windows Server 2016 SERVERDATACENTER" \\
+--iso "https://software-static.download.prss.microsoft.com/pr/download/Windows_Server_2016_Datacenter_EVAL_en-us_14393_refresh.ISO" \\
+--rdp-port "22"
+\`\`\`
+
+━━━━━━━━━━━━━━━━━━━━
+📚 SC OS LAINNYA
+Buka link berikut untuk semua opsi reinstall lain:
+👉 https://github.com/arivpnstores/reinstall/blob/main/README.en.md
+
+━━━━━━━━━━━━━━━━━━━━
+⚠️ WARNING:
+Reinstall akan menghapus semua data VPS
+━━━━━━━━━━━━━━━━━━━━
 `;
 
   await ctx.reply(message, { parse_mode: 'Markdown' });
@@ -910,29 +1154,53 @@ bot.on('text', async (ctx) => {
 
   if (state.step === 'input_nama_register') {
     const nama = text;
-    if (!/^[a-z0-9]+$/.test(nama)) {
-      return ctx.reply('❌ *Nama hanya boleh huruf kecil dan angka tanpa spasi.*', { parse_mode: 'Markdown' });
+    if (!/^[a-zA-Z0-9]+$/.test(nama)) {
+      return ctx.reply('❌ *Nama hanya boleh huruf (besar/kecil) dan angka tanpa spasi, tanpa simbol.*', { parse_mode: 'Markdown' });
+    }
+
+    state.nama = nama;
+    state.step = 'input_durasi_register';
+    return ctx.reply(
+      '📅 *Masukkan Durasi (dalam hari):*\n' +
+      'Contoh: `1`, `3`, `7`, `30`\n\n' +
+      'Harga: Rp166/hari (User) | Rp0/hari (Reseller)',
+      { parse_mode: 'Markdown' }
+    );
+  }
+
+  if (state.step === 'input_durasi_register') {
+    const durasi = parseInt(text);
+    
+    // Validasi input durasi
+    if (isNaN(durasi) || durasi < 1) {
+      return ctx.reply('❌ *Durasi harus berupa angka positif dan minimal 1 hari.* Coba lagi.', { parse_mode: 'Markdown' });
+    }
+    
+    if (durasi > 365) {
+      return ctx.reply('❌ *Durasi maksimal 365 hari.* Coba lagi.', { parse_mode: 'Markdown' });
     }
 
     const ip = state.ip;
-    const exp = 30;
-  // ==== Tentukan harga sesuai status user ====
-// ==== Cek Status Reseller ====
-let isReseller = false;
-if (fs.existsSync(resselFilePath)) {
-  const resellerList = fs.readFileSync(resselFilePath, 'utf8').split('\n').map(x => x.trim());
-  isReseller = resellerList.includes(ctx.from.id.toString());
-}
+    const nama = state.nama;
+    const exp = durasi;
+    
+    // ==== Tentukan harga per hari sesuai status user ====
+    let hargaPerHari = 166; // default untuk user biasa
+    
+    // ==== Cek Status Reseller ====
+    let isReseller = false;
+    if (fs.existsSync(resselFilePath)) {
+      const resellerList = fs.readFileSync(resselFilePath, 'utf8').split('\n').map(x => x.trim());
+      isReseller = resellerList.includes(ctx.from.id.toString());
+    }
+    
+    if (isReseller) {
+      hargaPerHari = 0; // harga khusus reseller
+    }
+    
+    const totalHarga = hargaPerHari * exp;
 
-
-let totalHarga = 5000; // default untuk user biasa
-
-if (isReseller) {
-  totalHarga = 2500; // harga khusus reseller
-}
-
-
-db.get('SELECT saldo FROM users WHERE user_id = ?', [ctx.from.id], async (err, row) => {
+    db.get('SELECT saldo FROM users WHERE user_id = ?', [ctx.from.id], async (err, row) => {
       if (err || !row) {
         delete userState[ctx.chat.id];
         return ctx.reply('❌ *Gagal mengambil data saldo.*', { parse_mode: 'Markdown' });
@@ -940,30 +1208,31 @@ db.get('SELECT saldo FROM users WHERE user_id = ?', [ctx.from.id], async (err, r
 
       if (row.saldo < totalHarga) {
         delete userState[ctx.chat.id];
-        return ctx.reply('❌ *Saldo tidak cukup. Minimal Rp5.000*', { parse_mode: 'Markdown' });
+        return ctx.reply(`❌ *Saldo tidak cukup.* Anda butuh Rp${totalHarga.toLocaleString('id-ID')}, saldo Anda Rp${row.saldo.toLocaleString('id-ID')}`, { parse_mode: 'Markdown' });
       }
 
       ctx.reply('🔧 *Memproses pendaftaran IP...*', { parse_mode: 'Markdown' });
 
-const maskedIp = ip.length > 1 
-  ? `${ip.slice(0, 1)}${'x'.repeat(ip.length - 1)}` 
-  : ip;
+      const maskedIp = ip.length > 1 
+        ? `${ip.slice(0, 1)}${'x'.repeat(ip.length - 1)}` 
+        : ip;
 
-// 🔔 IP Created
-await bot.telegram.sendMessage(
-  GROUP_ID,
-  `<blockquote>
+      // 🔔 IP Created
+      await bot.telegram.sendMessage(
+        GROUP_ID,
+        `<blockquote>
 📢 <b>IP Registered Created</b>
 ━━━━━━━━━━━━━━━━━━━━
 👤 <b>User:</b> ${ctx.from.first_name} (${ctx.from.id})
 🌐 <b>IP:</b> ${maskedIp}
 📛 <b>Nama:</b> ${nama}
-💰 <b>Harga:</b> Rp${totalHarga.toLocaleString('id-ID')}
-📆 <b>Expired:</b> ${exp || '-'} hari
+💰 <b>Harga:</b> Rp${totalHarga.toLocaleString('id-ID')} (${exp} hari x Rp${hargaPerHari})
+📆 <b>Expired:</b> ${exp} hari
 ━━━━━━━━━━━━━━━━━━━━
 </blockquote>`,
-  { parse_mode: 'HTML' }
-       );
+        { parse_mode: 'HTML' }
+      );
+      
       const { exec } = require('child_process');
       const shellCommand = `chmod +x ./modules/* && printf "%s\\n" "3" "${ip}" | ./modules/m-ftr-admin.sh && printf "%s\\n" "1" "${ip}" "${nama}" "${exp}" | ./modules/m-ftr-admin.sh`;
 
@@ -972,9 +1241,9 @@ await bot.telegram.sendMessage(
           console.error('❌ CMD ERROR:', error.message);
           return ctx.reply(`❌ *Gagal menjalankan perintah:* ${error.message}`, { parse_mode: 'Markdown' });
         }
-//SALDO DATABES
-// kalau sampai sini artinya tidak ada ❌, transaksi sukses
-logger.info(`✅ Transaksi sukses untuk user ${ctx.from.id}`);
+        
+        // kalau sampai sini artinya tidak ada ❌, transaksi sukses
+        logger.info(`✅ Transaksi sukses untuk user ${ctx.from.id}`);
 
         db.run('UPDATE users SET saldo = saldo - ? WHERE user_id = ?', [totalHarga, ctx.from.id], (err) => {
           if (err) {
@@ -982,15 +1251,19 @@ logger.info(`✅ Transaksi sukses untuk user ${ctx.from.id}`);
           }
 
           updateTotalCreateAkun(ctx);
-         const cleanOutput = stdout.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '').trim();
-          ctx.reply(`✅ *IP berhasil didaftarkan!*\n${cleanOutput}`, {
-            parse_mode: 'Markdown'
-          });
+          const cleanOutput = stdout.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '').trim();
+          ctx.reply(
+            `✅ *IP berhasil didaftarkan!*\n` +
+            `📅 Durasi: ${exp} hari\n` +
+            `💰 Total: Rp${totalHarga.toLocaleString('id-ID')}\n` +
+            `${cleanOutput}`,
+            { parse_mode: 'Markdown' }
+          );
           delete userState[ctx.chat.id];
-//SALDO DATABES
         });
       });
     });
+    return;
   }
 
   if (state.step === 'input_trial_ip') {
@@ -1011,7 +1284,7 @@ logger.info(`✅ Transaksi sukses untuk user ${ctx.from.id}`);
       }
       return out;
     })();
-    const exp = 1;
+    const exp = 3;
     const totalHarga = 0; // gratis trial
 
 db.get('SELECT saldo FROM users WHERE user_id = ?', [ctx.from.id], async (err, row) => {
@@ -1161,23 +1434,50 @@ await bot.telegram.sendMessage(
     if (!ipRegex.test(ip)) {
       return ctx.reply('❌ *Format IP tidak valid.* Coba lagi.', { parse_mode: 'Markdown' });
     }
-// ==== Cek Status Reseller ====
-let isReseller = false;
-if (fs.existsSync(resselFilePath)) {
-  const resellerList = fs.readFileSync(resselFilePath, 'utf8').split('\n').map(x => x.trim());
-  isReseller = resellerList.includes(ctx.from.id.toString());
-}
 
-    const exp = 30;
-  // ==== Tentukan harga sesuai status user ====
-let totalHarga = 5000; // default untuk user biasa
+    state.ip = ip;
+    state.step = 'input_durasi_renew';
+    return ctx.reply(
+      '📅 *Masukkan Durasi Perpanjangan (dalam hari):*\n' +
+      'Contoh: `1`, `3`, `7`, `30`\n\n' +
+      'Harga: Rp166/hari (User) | Rp0/hari (Reseller)\n\n' +
+      '_💡 Jika akun masih aktif, masa aktif akan ditambahkan._',
+      { parse_mode: 'Markdown' }
+    );
+  }
 
-if (isReseller) {
-  totalHarga = 2500; // harga khusus reseller
-}
+  if (state.step === 'input_durasi_renew') {
+    const durasi = parseInt(text);
+    
+    // Validasi input durasi
+    if (isNaN(durasi) || durasi < 1) {
+      return ctx.reply('❌ *Durasi harus berupa angka positif dan minimal 1 hari.* Coba lagi.', { parse_mode: 'Markdown' });
+    }
+    
+    if (durasi > 365) {
+      return ctx.reply('❌ *Durasi maksimal 365 hari.* Coba lagi.', { parse_mode: 'Markdown' });
+    }
 
+    const ip = state.ip;
+    const exp = durasi;
+    
+    // ==== Cek Status Reseller ====
+    let isReseller = false;
+    if (fs.existsSync(resselFilePath)) {
+      const resellerList = fs.readFileSync(resselFilePath, 'utf8').split('\n').map(x => x.trim());
+      isReseller = resellerList.includes(ctx.from.id.toString());
+    }
 
-db.get('SELECT saldo FROM users WHERE user_id = ?', [ctx.from.id], async (err, row) => {
+    // ==== Tentukan harga per hari sesuai status user ====
+    let hargaPerHari = 166; // default untuk user biasa
+    
+    if (isReseller) {
+      hargaPerHari = 0; // harga khusus reseller
+    }
+    
+    const totalHarga = hargaPerHari * exp;
+
+    db.get('SELECT saldo FROM users WHERE user_id = ?', [ctx.from.id], async (err, row) => {
       if (err || !row) {
         delete userState[ctx.chat.id];
         return ctx.reply('❌ *Gagal mengambil data saldo.*', { parse_mode: 'Markdown' });
@@ -1185,24 +1485,28 @@ db.get('SELECT saldo FROM users WHERE user_id = ?', [ctx.from.id], async (err, r
 
       if (row.saldo < totalHarga) {
         delete userState[ctx.chat.id];
-        return ctx.reply('❌ *Saldo tidak cukup. Minimal Rp5.000*', { parse_mode: 'Markdown' });
+        return ctx.reply(`❌ *Saldo tidak cukup.* Anda butuh Rp${totalHarga.toLocaleString('id-ID')}, saldo Anda Rp${row.saldo.toLocaleString('id-ID')}`, { parse_mode: 'Markdown' });
       }
-const maskedIp = ip.length > 1 
-  ? `${ip.slice(0, 1)}${'x'.repeat(ip.length - 1)}` 
-  : ip;
-// 🔔 IP Renew
-await bot.telegram.sendMessage(
-  GROUP_ID,
-  `<blockquote>
+
+      const maskedIp = ip.length > 1 
+        ? `${ip.slice(0, 1)}${'x'.repeat(ip.length - 1)}` 
+        : ip;
+
+      // 🔔 IP Renew
+      await bot.telegram.sendMessage(
+        GROUP_ID,
+        `<blockquote>
 ♻️ <b>Account Renewed</b>
 ━━━━━━━━━━━━━━━━━━━━
 👤 <b>User:</b> ${ctx.from.first_name} (${ctx.from.id})
 🌐 <b>IP:</b> ${maskedIp}
-📆 <b>New Expiry:</b> ${exp || '-'} hari
+💰 <b>Harga:</b> Rp${totalHarga.toLocaleString('id-ID')} (${exp} hari x Rp${hargaPerHari})
+📆 <b>New Expiry:</b> ${exp} hari
 ━━━━━━━━━━━━━━━━━━━━
 </blockquote>`,
-  { parse_mode: 'HTML' }
-       );
+        { parse_mode: 'HTML' }
+      );
+      
       ctx.reply('🔧 *Memproses perpanjangan IP...*', { parse_mode: 'Markdown' });
 
       const { exec } = require('child_process');
@@ -1213,9 +1517,9 @@ await bot.telegram.sendMessage(
           console.error('❌ CMD ERROR:', error.message);
           return ctx.reply(`❌ *Gagal menjalankan perintah:* ${error.message}`, { parse_mode: 'Markdown' });
         }
-//SALDO DATABES
-// kalau sampai sini artinya tidak ada ❌, transaksi sukses
-logger.info(`✅ Transaksi sukses untuk user ${ctx.from.id}`);
+
+        // kalau sampai sini artinya tidak ada ❌, transaksi sukses
+        logger.info(`✅ Transaksi renew sukses untuk user ${ctx.from.id}`);
 
         db.run('UPDATE users SET saldo = saldo - ? WHERE user_id = ?', [totalHarga, ctx.from.id], (err) => {
           if (err) {
@@ -1223,15 +1527,19 @@ logger.info(`✅ Transaksi sukses untuk user ${ctx.from.id}`);
           }
 
           updateTotalCreateAkun(ctx);
-         const cleanOutput = stdout.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '').trim();
-          ctx.reply(`✅ *IP berhasil didaftarkan!*\n${cleanOutput}`, {
-            parse_mode: 'Markdown'
-          });
+          const cleanOutput = stdout.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '').trim();
+          ctx.reply(
+            `✅ *IP berhasil diperpanjang!*\n` +
+            `📅 Durasi: ${exp} hari\n` +
+            `💰 Total: Rp${totalHarga.toLocaleString('id-ID')}\n` +
+            `${cleanOutput}`,
+            { parse_mode: 'Markdown' }
+          );
           delete userState[ctx.chat.id];
-//SALDO DATABES
         });
       });
     });
+    return;
   }
 
 if (state.step === 'input_del_ip') {
@@ -1272,7 +1580,7 @@ db.get('SELECT saldo FROM users WHERE user_id = ?', [ctx.from.id], async (err, r
 
       if (row.saldo < totalHarga) {
         delete userState[ctx.chat.id];
-        return ctx.reply('❌ *Saldo tidak cukup. Minimal Rp5.000*', { parse_mode: 'Markdown' });
+        return ctx.reply(`❌ *Saldo tidak cukup.* Anda butuh Rp${totalHarga.toLocaleString('id-ID')}, saldo Anda Rp${row.saldo.toLocaleString('id-ID')}`, { parse_mode: 'Markdown' });
       }
 const maskedIp = ip.length > 1 
   ? `${ip.slice(0, 1)}${'x'.repeat(ip.length - 1)}` 
@@ -1847,6 +2155,54 @@ function generateRandomNumber(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function normalizeCurrencyValue(value) {
+  return Number(String(value ?? '').replace(/[^\d]/g, '')) || 0;
+}
+
+function extractPaymentAmount(tx, fallbackAmount = 0) {
+  const candidates = [
+    tx?.amount,
+    tx?.jumlah,
+    tx?.kredit,
+    tx?.nominal,
+    tx?.gross_amount
+  ];
+
+  for (const candidate of candidates) {
+    const amount = normalizeCurrencyValue(candidate);
+    if (amount > 0) return amount;
+  }
+
+  return normalizeCurrencyValue(fallbackAmount);
+}
+
+function buildExternalTransactionRef(tx, fallbackKey) {
+  const refCandidates = [
+    tx?.reference_id,
+    tx?.reference,
+    tx?.transaction_id,
+    tx?.trx_id,
+    tx?.id_transaksi,
+    tx?.id,
+    tx?.merchant_ref,
+    tx?.keterangan
+  ];
+
+  for (const candidate of refCandidates) {
+    const ref = String(candidate || '').trim();
+    if (ref) return `ext:${ref}`;
+  }
+
+  const fingerprint = [
+    String(tx?.status || '').trim().toUpperCase(),
+    extractPaymentAmount(tx, 0),
+    String(tx?.saldo_akhir || '').trim(),
+    String(tx?.keterangan || '').trim()
+  ].join('|');
+
+  return `ext:${fallbackKey}:${fingerprint}`;
+}
+
 // ============================
 // EXEC PROMISE
 // ============================
@@ -1897,7 +2253,7 @@ async function processDeposit(ctx, amount) {
       adminFee = 0;
 
       const res = await axios.post(
-        "https://api-gopay.sawargipay.cloud/qris/generate",
+        "https://v1-gateway.autogopay.site/qris/generate",
         { amount: finalAmount },
         {
           headers: {
@@ -2006,8 +2362,10 @@ async function processDeposit(ctx, amount) {
       amount: finalAmount,
       originalAmount: Number(amount),
       userId,
+      chatId: ctx.chat?.id || ctx.from?.id,
       timestamp: Date.now(),
       status: 'pending',
+      processing: false,
       qrMessageId: qrMessage?.message_id,
       transactionId
     };
@@ -2053,7 +2411,9 @@ async function checkQRISStatus() {
   const now = Date.now();
 
   for (const [uniqueCode, deposit] of Object.entries(global.pendingDeposits)) {
-    if (deposit.status !== 'pending') continue;
+    if (deposit.status !== 'pending' || deposit.processing) continue;
+
+    deposit.processing = true;
 
     try {
       // EXPIRATION
@@ -2069,7 +2429,7 @@ async function checkQRISStatus() {
       if (vars.PAYMENT === "GOPAY") {
         // Cek status via API GoPay
         const res = await axios.post(
-          "https://api-gopay.sawargipay.cloud/qris/status",
+          "https://v1-gateway.autogopay.site/qris/status",
           { transaction_id: deposit.transactionId },
           {
             headers: {
@@ -2121,11 +2481,10 @@ async function checkQRISStatus() {
         }
 
         const list = data.qris_history.results;
-        const normalize = v => Number(String(v || '').replace(/[^\d]/g, '')) || 0;
-        const targetAmount = normalize(deposit.amount);
+        const targetAmount = normalizeCurrencyValue(deposit.amount);
 
         const match = list.find(tx => {
-          const kredit = normalize(tx.kredit);
+          const kredit = extractPaymentAmount(tx, 0);
           const status = String(tx.status || '').toUpperCase();
           return kredit === targetAmount && status === 'IN';
         });
@@ -2147,6 +2506,10 @@ async function checkQRISStatus() {
 
     } catch (err) {
       logger.error(`[QRIS] ERROR ${uniqueCode}: ${err.message}`);
+    } finally {
+      if (global.pendingDeposits[uniqueCode]) {
+        global.pendingDeposits[uniqueCode].processing = false;
+      }
     }
   }
 }
@@ -2246,14 +2609,16 @@ async function sendPaymentSuccessNotification(userId, deposit, currentBalance) {
 }
 
 async function processMatchingPayment(deposit, matchingTransaction, uniqueCode) {
-  const transactionKey = `${matchingTransaction.reference_id || uniqueCode}_${matchingTransaction.amount}`;
+  const externalAmount = extractPaymentAmount(matchingTransaction, deposit.amount);
+  const externalReference = buildExternalTransactionRef(matchingTransaction, uniqueCode);
+  const transactionKey = `${externalReference}_${externalAmount}`;
   // Use a database transaction to ensure atomicity
   return new Promise((resolve, reject) => {
     db.serialize(() => {
       db.run('BEGIN TRANSACTION');
       // First check if transaction was already processed
-      db.get('SELECT id FROM transactions WHERE reference_id = ? AND amount = ?', 
-        [matchingTransaction.reference_id || uniqueCode, matchingTransaction.amount], 
+      db.get('SELECT id FROM transactions WHERE reference_id = ?',
+        [externalReference],
         (err, row) => {
           if (err) {
             db.run('ROLLBACK');
@@ -2280,7 +2645,7 @@ async function processMatchingPayment(deposit, matchingTransaction, uniqueCode) 
     // Record the transaction
       db.run(
                 'INSERT INTO transactions (user_id, amount, type, reference_id, timestamp) VALUES (?, ?, ?, ?, ?)',
-                [deposit.userId, deposit.originalAmount, 'deposit', matchingTransaction.reference_id || uniqueCode, Date.now()],
+                [deposit.userId, deposit.originalAmount, 'deposit', externalReference, Date.now()],
         (err) => {
                   if (err) {
                     db.run('ROLLBACK');
